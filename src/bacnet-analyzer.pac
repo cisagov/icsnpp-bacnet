@@ -79,13 +79,13 @@
             case 5: // Double (ANSI/IEEE-754 double precision floating point)
                 return to_string(get_double(data));
             case 6: // Octet String
-                for ( uint8 i = 0; i < data.length(); ++i )
+                for ( int32 i = 0; i < data.length(); ++i )
                     str += fmt("%x",data[i]);
                 return str;
             case 7: // Character String
                 return get_string(data);
             case 8: // Bit String
-                for( uint8 j = 1; j < data.length(); ++j){
+                for( int8 j = 1; j < data.length(); ++j){
                     for( int8 i = 7; i >= 0; --i)
                         str += ((data[j]>>i)&1)==1 ? "T" : "F";
                 }
@@ -109,7 +109,7 @@
     uint32 get_number(const_bytestring data)
     {
         uint32 number = 0;
-        for ( uint8 i = 0; i < data.length(); ++i ){
+        for ( int32 i = 0; i < data.length(); ++i ){
             number <<= 8;
             number |= data[i];
         }
@@ -140,7 +140,7 @@
         if( data[0] != 0 )
             return str;
 
-        for ( uint8 i = 1; i < data.length(); ++i )
+        for ( int32 i = 1; i < data.length(); ++i )
             str += data[i];
         
         return str;
@@ -175,7 +175,7 @@ refine flow BACNET_Flow += {
         %{
             if ( ::bacnet_header )
             {
-                BifEvent::generate_bacnet_header(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_header(connection()->bro_analyzer(),
                                                 connection()->bro_analyzer()->Conn(),
                                                 bvlc_function,
                                                 pdu_type,
@@ -187,7 +187,7 @@ refine flow BACNET_Flow += {
             {
                 if( pdu_service == READ_PROPERTY || pdu_service == READ_PROPERTY_MULTIPLE || pdu_service == WRITE_PROPERTY || pdu_service == WRITE_PROPERTY_MULTIPLE )
                 {
-                    BifEvent::generate_bacnet_property_error(connection()->bro_analyzer(),
+                    zeek::BifEvent::enqueue_bacnet_property_error(connection()->bro_analyzer(),
                                                             connection()->bro_analyzer()->Conn(),
                                                             pdu_type,
                                                             pdu_service,
@@ -236,7 +236,7 @@ refine flow BACNET_Flow += {
                 uint8 segmentation_supported = ${tags[2].tag_data[0]};
                 uint32 vendor_id = get_number(${tags[3].tag_data});
 
-                BifEvent::generate_bacnet_i_am(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_i_am(connection()->bro_analyzer(),
                                               connection()->bro_analyzer()->Conn(),
                                               device_identifier.object_type,
                                               device_identifier.instance_number,
@@ -273,13 +273,13 @@ refine flow BACNET_Flow += {
                 BACnetObjectIdentifier object_identifier = {${tags[1].tag_data}};
                 string object_name = get_string(${tags[2].tag_data});
 
-                BifEvent::generate_bacnet_i_have(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_i_have(connection()->bro_analyzer(),
                                                  connection()->bro_analyzer()->Conn(),
                                                  device_identifier.object_type,
                                                  device_identifier.instance_number,
                                                  object_identifier.object_type,
                                                  object_identifier.instance_number,
-                                                 new StringVal(object_name));
+                                                 zeek::make_intrusive<zeek::StringVal>(object_name));
             }
             return true;
         %}
@@ -316,7 +316,7 @@ refine flow BACNET_Flow += {
                 BACnetObjectIdentifier monitored_identifier = {${tags[2].tag_data}};
                 uint32 time_remaining = get_number(${tags[3].tag_data});
                 
-                BifEvent::generate_bacnet_unconfirmed_cov_notification(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_unconfirmed_cov_notification(connection()->bro_analyzer(),
                                                                        connection()->bro_analyzer()->Conn(),
                                                                        subscriber_identifier,
                                                                        initiating_identifier.object_type,
@@ -387,7 +387,7 @@ refine flow BACNET_Flow += {
                 
                 string message_text = "";
 
-                for ( uint8 i = 0; i < ${tags}->size(); ++i ){
+                for ( uint32 i = 0; i < ${tags}->size(); ++i ){
                     switch(${tags[i].tag_num}){
                         case 0:
                             process_identifier = get_number(${tags[i].tag_data});
@@ -427,7 +427,7 @@ refine flow BACNET_Flow += {
                     }
                 }
                 
-                BifEvent::generate_bacnet_unconfirmed_event_notification(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_unconfirmed_event_notification(connection()->bro_analyzer(),
                                                                          connection()->bro_analyzer()->Conn(),
                                                                          process_identifier,
                                                                          initiating_identifier.object_type,
@@ -437,7 +437,7 @@ refine flow BACNET_Flow += {
                                                                          notification_class,
                                                                          priority,
                                                                          event_type,
-                                                                         new StringVal(message_text),
+                                                                         zeek::make_intrusive<zeek::StringVal>(message_text),
                                                                          notify_type,
                                                                          ack_required,
                                                                          from_state,
@@ -467,7 +467,7 @@ refine flow BACNET_Flow += {
             {
                 uint32 vendor_id = get_number(${tags[0].tag_data});
                 uint32 service_number = get_number(${tags[1].tag_data});
-                BifEvent::generate_bacnet_unconfirmed_private_transfer(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_unconfirmed_private_transfer(connection()->bro_analyzer(),
                                                                        connection()->bro_analyzer()->Conn(),
                                                                        vendor_id,
                                                                        service_number);
@@ -507,12 +507,12 @@ refine flow BACNET_Flow += {
                 uint8 message_priority = ${tags[i].tag_data[0]};;
                 string message = get_string(${tags[i+1].tag_data});
 
-                BifEvent::generate_bacnet_unconfirmed_text_message(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_unconfirmed_text_message(connection()->bro_analyzer(),
                                                                    connection()->bro_analyzer()->Conn(),
                                                                    object_identifier.object_type,
                                                                    object_identifier.instance_number,
                                                                    message_priority,
-                                                                   new StringVal(message));
+                                                                   zeek::make_intrusive<zeek::StringVal>(message));
             }
             return true;
         %}
@@ -541,7 +541,7 @@ refine flow BACNET_Flow += {
             {
                 BACnetDate date = {${tags[0].tag_data}};
                 BACnetTime time = {${tags[1].tag_data}};
-                BifEvent::generate_bacnet_time_synchronization(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_time_synchronization(connection()->bro_analyzer(),
                                                                connection()->bro_analyzer()->Conn(),
                                                                date.year,
                                                                date.month,
@@ -585,7 +585,7 @@ refine flow BACNET_Flow += {
                 uint32 low_limit = UINT32_MAX, high_limit = UINT32_MAX;
                 string object_name = "";
 
-                for ( uint8 i = 0; i < ${tags}->size(); ++i ){
+                for ( uint32 i = 0; i < ${tags}->size(); ++i ){
                     switch(${tags[i].tag_num}){
                         case 0:
                             low_limit = get_number(${tags[i].tag_data});
@@ -604,13 +604,13 @@ refine flow BACNET_Flow += {
                     }
                 }
 
-                BifEvent::generate_bacnet_who_has(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_who_has(connection()->bro_analyzer(),
                                                   connection()->bro_analyzer()->Conn(),
                                                   low_limit,
                                                   high_limit,
                                                   object_identifier.object_type,
                                                   object_identifier.instance_number,
-                                                  new StringVal(object_name));
+                                                  zeek::make_intrusive<zeek::StringVal>(object_name));
             }
             return true;
         %}
@@ -640,7 +640,7 @@ refine flow BACNET_Flow += {
                     high_limit = get_number(${tags[1].tag_data});
                 }
 
-                BifEvent::generate_bacnet_who_is(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_who_is(connection()->bro_analyzer(),
                                                  connection()->bro_analyzer()->Conn(),
                                                  low_limit,
                                                  high_limit);
@@ -673,7 +673,7 @@ refine flow BACNET_Flow += {
                 BACnetDate date = {${tags[0].tag_data}};
                 BACnetTime time = {${tags[1].tag_data}};
                 
-                BifEvent::generate_bacnet_utc_time_synchronization(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_utc_time_synchronization(connection()->bro_analyzer(),
                                                                    connection()->bro_analyzer()->Conn(),
                                                                    date.year,
                                                                    date.month,
@@ -711,7 +711,7 @@ refine flow BACNET_Flow += {
                 uint32 group_number = get_number(${tags[0].tag_data});
                 uint8 write_priority = ${tags[1].tag_data[1]};
 
-                BifEvent::generate_bacnet_write_group(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_write_group(connection()->bro_analyzer(),
                                                       connection()->bro_analyzer()->Conn(),
                                                       group_number,
                                                       write_priority);
@@ -748,7 +748,7 @@ refine flow BACNET_Flow += {
                 BACnetObjectIdentifier initiating_identifier = {${tags[1].tag_data}};
                 uint32 time_remaining = get_number(${tags[2].tag_data});
                 
-                BifEvent::generate_bacnet_unconfirmed_cov_notification_multiple(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_unconfirmed_cov_notification_multiple(connection()->bro_analyzer(),
                                                                                 connection()->bro_analyzer()->Conn(),
                                                                                 subscriber_identifier,
                                                                                 initiating_identifier.object_type,
@@ -799,7 +799,7 @@ refine flow BACNET_Flow += {
                 BACnetObjectIdentifier event_identifier = {${tags[1].tag_data}};
                 uint32 event_state = get_number(${tags[2].tag_data});
                 
-                BifEvent::generate_bacnet_acknowledge_alarm(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_acknowledge_alarm(connection()->bro_analyzer(),
                                                             connection()->bro_analyzer()->Conn(),
                                                             acknowledge_process_id,
                                                             event_identifier.object_type,
@@ -841,7 +841,7 @@ refine flow BACNET_Flow += {
                 BACnetObjectIdentifier monitored_identifier = {${tags[2].tag_data}};
                 uint32 time_remaining = get_number(${tags[3].tag_data});
                 
-                BifEvent::generate_bacnet_confirmed_cov_notification(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_confirmed_cov_notification(connection()->bro_analyzer(),
                                                                      connection()->bro_analyzer()->Conn(),
                                                                      subscriber_identifier,
                                                                      initiating_identifier.object_type,
@@ -912,7 +912,7 @@ refine flow BACNET_Flow += {
                 
                 string message_text = "";
 
-                for ( uint8 i = 0; i < ${tags}->size(); ++i ){
+                for ( uint32 i = 0; i < ${tags}->size(); ++i ){
                     switch(${tags[i].tag_num}){
                         case 0:
                             process_identifier = get_number(${tags[i].tag_data});
@@ -952,7 +952,7 @@ refine flow BACNET_Flow += {
                     }
                 }
                 
-                BifEvent::generate_bacnet_confirmed_event_notification(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_confirmed_event_notification(connection()->bro_analyzer(),
                                                                        connection()->bro_analyzer()->Conn(),
                                                                        process_identifier,
                                                                        initiating_identifier.object_type,
@@ -962,7 +962,7 @@ refine flow BACNET_Flow += {
                                                                        notification_class,
                                                                        priority,
                                                                        event_type,
-                                                                       new StringVal(message_text),
+                                                                       zeek::make_intrusive<zeek::StringVal>(message_text),
                                                                        notify_type,
                                                                        ack_required,
                                                                        from_state,
@@ -984,7 +984,7 @@ refine flow BACNET_Flow += {
         %{
             if ( ::bacnet_get_alarm_summary )
             {
-                BifEvent::generate_bacnet_get_alarm_summary(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_get_alarm_summary(connection()->bro_analyzer(),
                                                             connection()->bro_analyzer()->Conn());
             }
             return true;
@@ -1004,7 +1004,7 @@ refine flow BACNET_Flow += {
         %{
             if ( ::bacnet_get_enrollment_summary )
             {
-                BifEvent::generate_bacnet_get_enrollment_summary(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_get_enrollment_summary(connection()->bro_analyzer(),
                                                                  connection()->bro_analyzer()->Conn());
             }
             return true;
@@ -1040,7 +1040,7 @@ refine flow BACNET_Flow += {
                 uint32 lifetime = UINT32_MAX;
                 uint8 issue_confirmed = UINT8_MAX;
 
-                for ( uint8 i = 2; i < ${tags}->size(); ++i ){
+                for ( uint32 i = 2; i < ${tags}->size(); ++i ){
                     switch(${tags[i].tag_num}){
                         case 2:
                             issue_confirmed = ${tags[i].tag_data[0]};
@@ -1053,7 +1053,7 @@ refine flow BACNET_Flow += {
                     }
                 }
 
-                BifEvent::generate_bacnet_subscribe_cov(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_subscribe_cov(connection()->bro_analyzer(),
                                                         connection()->bro_analyzer()->Conn(),
                                                         subscriber_process_identifier,
                                                         monitored_identifier.object_type,
@@ -1101,11 +1101,11 @@ refine flow BACNET_Flow += {
                 uint32 file_start = get_number(${tags[2].tag_data});
                 uint32 requested_count = get_number(${tags[3].tag_data});
 
-                BifEvent::generate_bacnet_atomic_read_file(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_atomic_read_file(connection()->bro_analyzer(),
                                                            connection()->bro_analyzer()->Conn(),
                                                            file_identifier.object_type,
                                                            file_identifier.instance_number,
-                                                           new StringVal(access_type),
+                                                           zeek::make_intrusive<zeek::StringVal>(access_type),
                                                            file_start,
                                                            requested_count);
             }
@@ -1158,14 +1158,14 @@ refine flow BACNET_Flow += {
                     data_to_write = get_string(${tags[4].tag_data});
                 }
 
-                BifEvent::generate_bacnet_atomic_write_file(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_atomic_write_file(connection()->bro_analyzer(),
                                                             connection()->bro_analyzer()->Conn(),
                                                             file_identifier.object_type,
                                                             file_identifier.instance_number,
-                                                            new StringVal(access_type),
+                                                            zeek::make_intrusive<zeek::StringVal>(access_type),
                                                             file_start,
                                                             record_count,
-                                                            new StringVal(data_to_write));
+                                                            zeek::make_intrusive<zeek::StringVal>(data_to_write));
 
             }
             return true;
@@ -1201,7 +1201,7 @@ refine flow BACNET_Flow += {
                 if(${tags}->size() > 2)
                     property_array_index = get_number(${tags[2].tag_data});
 
-                BifEvent::generate_bacnet_add_list_element(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_add_list_element(connection()->bro_analyzer(),
                                                            connection()->bro_analyzer()->Conn(),
                                                            object_identifier.object_type,
                                                            object_identifier.instance_number,
@@ -1244,7 +1244,7 @@ refine flow BACNET_Flow += {
                     property_array_index = get_number(${tags[2].tag_data});
                 
 
-                BifEvent::generate_bacnet_remove_list_element(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_remove_list_element(connection()->bro_analyzer(),
                                                               connection()->bro_analyzer()->Conn(),
                                                               object_identifier.object_type,
                                                               object_identifier.instance_number,
@@ -1269,7 +1269,7 @@ refine flow BACNET_Flow += {
         %{
             if ( ::bacnet_create_object )
             {
-                BifEvent::generate_bacnet_create_object(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_create_object(connection()->bro_analyzer(),
                                                         connection()->bro_analyzer()->Conn());
             }
             return true;
@@ -1290,7 +1290,7 @@ refine flow BACNET_Flow += {
             if ( ::bacnet_delete_object )
             {
                 BACnetObjectIdentifier object_identifier = {${tags[0].tag_data}};
-                BifEvent::generate_bacnet_delete_object(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_delete_object(connection()->bro_analyzer(),
                                                         connection()->bro_analyzer()->Conn(),
                                                         object_identifier.object_type,
                                                         object_identifier.instance_number);
@@ -1326,9 +1326,9 @@ refine flow BACNET_Flow += {
                 if(${tags}->size() > 2)
                     property_array_index = get_number(${tags[2].tag_data});
         
-                BifEvent::generate_bacnet_read_property(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_read_property(connection()->bro_analyzer(),
                                                         connection()->bro_analyzer()->Conn(),
-                                                        new StringVal("read-property-request"),
+                                                        zeek::make_intrusive<zeek::StringVal>("read-property-request"),
                                                         object_identifier.object_type,
                                                         object_identifier.instance_number,
                                                         property_identifier,
@@ -1351,19 +1351,19 @@ refine flow BACNET_Flow += {
         %{
             if ( ::bacnet_read_property )
             {
-                for ( uint8 x = 0; x < ${tags}->size(); ++x ){
+                for ( uint32 x = 0; x < ${tags}->size(); ++x ){
                     BACnetObjectIdentifier object_identifier = {${tags[x].tag_data}};
                     x += 1;
-                    for ( uint8 i = x; i < ${tags}->size(); ++i ){
+                    for ( uint32 i = x; i < ${tags}->size(); ++i ){
                         if(${tags[i].named_tag} == OPENING){
                             continue;
                         }else if(${tags[i].named_tag} == CLOSING){
                             x = i;
                             break;
                         }else{
-                            BifEvent::generate_bacnet_read_property(connection()->bro_analyzer(),
+                            zeek::BifEvent::enqueue_bacnet_read_property(connection()->bro_analyzer(),
                                                                 connection()->bro_analyzer()->Conn(),
-                                                                new StringVal("read-property-multiple-request"),
+                                                                zeek::make_intrusive<zeek::StringVal>("read-property-multiple-request"),
                                                                 object_identifier.object_type,
                                                                 object_identifier.instance_number,
                                                                 get_number(${tags[i].tag_data}),
@@ -1410,7 +1410,7 @@ refine flow BACNET_Flow += {
                 uint8 priority = UINT8_MAX;
                 string property_value = "";
                 int8 first = 1;
-                for ( uint8 i = 2; i < ${tags}->size(); ++i ){
+                for ( uint32 i = 2; i < ${tags}->size(); ++i ){
                     switch(${tags[i].tag_num}){
                         case 2:
                             property_array_index = get_number(${tags[i].tag_data});
@@ -1429,14 +1429,14 @@ refine flow BACNET_Flow += {
                 }
 
 
-                BifEvent::generate_bacnet_write_property(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_write_property(connection()->bro_analyzer(),
                                                          connection()->bro_analyzer()->Conn(),
                                                          object_identifier.object_type,
                                                          object_identifier.instance_number,
                                                          property_identifier,
                                                          property_array_index,
                                                          priority,
-                                                         new StringVal(property_value));
+                                                         zeek::make_intrusive<zeek::StringVal>(property_value));
             }
             return true;
         %}
@@ -1459,7 +1459,7 @@ refine flow BACNET_Flow += {
         %{
             if ( ::bacnet_write_property_multiple )
             {
-                BifEvent::generate_bacnet_write_property_multiple(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_write_property_multiple(connection()->bro_analyzer(),
                                                                   connection()->bro_analyzer()->Conn());
             }
             return true;
@@ -1490,7 +1490,7 @@ refine flow BACNET_Flow += {
                 uint8 enable_disable = UINT8_MAX; 
                 string password = "";
 
-                for ( uint8 i = 0; i < ${tags}->size(); ++i ){
+                for ( uint32 i = 0; i < ${tags}->size(); ++i ){
                     switch(${tags[i].tag_num}){
                         case 0:
                             time_duration = get_number(${tags[i].tag_data});
@@ -1506,11 +1506,11 @@ refine flow BACNET_Flow += {
                     }
                 }
 
-                BifEvent::generate_bacnet_device_communication_control(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_device_communication_control(connection()->bro_analyzer(),
                                                                        connection()->bro_analyzer()->Conn(),
                                                                        time_duration,
                                                                        enable_disable,
-                                                                       new StringVal(password));
+                                                                       zeek::make_intrusive<zeek::StringVal>(password));
             }
             return true;
         %}
@@ -1535,7 +1535,7 @@ refine flow BACNET_Flow += {
             {
                 uint32 vendor_id = get_number(${tags[0].tag_data});
                 uint32 service_number = get_number(${tags[1].tag_data});
-                BifEvent::generate_bacnet_confirmed_private_transfer(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_confirmed_private_transfer(connection()->bro_analyzer(),
                                                                      connection()->bro_analyzer()->Conn(),
                                                                      vendor_id,
                                                                      service_number);
@@ -1575,12 +1575,12 @@ refine flow BACNET_Flow += {
                 uint8 message_priority = ${tags[i].tag_data[0]};;
                 string message = get_string(${tags[i+1].tag_data});
 
-                BifEvent::generate_bacnet_confirmed_text_message(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_confirmed_text_message(connection()->bro_analyzer(),
                                                                  connection()->bro_analyzer()->Conn(),
                                                                  object_identifier.object_type,
                                                                  object_identifier.instance_number,
                                                                  message_priority,
-                                                                 new StringVal(message));
+                                                                 zeek::make_intrusive<zeek::StringVal>(message));
             }
             return true;
         %}
@@ -1608,10 +1608,10 @@ refine flow BACNET_Flow += {
                 if(${tags}->size() > 1)
                     password = get_string(${tags[1].tag_data});
                 
-                BifEvent::generate_bacnet_reinitialize_device(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_reinitialize_device(connection()->bro_analyzer(),
                                                               connection()->bro_analyzer()->Conn(),
                                                               reinitialized_state,
-                                                              new StringVal(password));
+                                                              zeek::make_intrusive<zeek::StringVal>(password));
             }
             return true;
         %}
@@ -1635,7 +1635,7 @@ refine flow BACNET_Flow += {
                 uint8 vt_class = ${tags[0].tag_data[0]};
                 uint8 local_vt_id = ${tags[1].tag_data[0]};
 
-                BifEvent::generate_bacnet_vt_open(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_vt_open(connection()->bro_analyzer(),
                                                   connection()->bro_analyzer()->Conn(),
                                                   vt_class,
                                                   local_vt_id);
@@ -1657,7 +1657,7 @@ refine flow BACNET_Flow += {
             if ( ::bacnet_vt_close )
             {
                 uint8 remote_vt_id = ${tags[0].tag_data[0]};
-                BifEvent::generate_bacnet_vt_close(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_vt_close(connection()->bro_analyzer(),
                                                    connection()->bro_analyzer()->Conn(),
                                                    remote_vt_id);
             }
@@ -1687,10 +1687,10 @@ refine flow BACNET_Flow += {
                 string vt_data = get_string(${tags[1].tag_data});
                 uint8 vt_flag = ${tags[2].tag_data[0]};
              
-                BifEvent::generate_bacnet_vt_data(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_vt_data(connection()->bro_analyzer(),
                                                   connection()->bro_analyzer()->Conn(),
                                                   vt_session_id,
-                                                  new StringVal(vt_data),
+                                                  zeek::make_intrusive<zeek::StringVal>(vt_data),
                                                   vt_flag);
             }
             return true;
@@ -1724,7 +1724,7 @@ refine flow BACNET_Flow += {
                 if(${tags}->size() > 2)
                     property_array_index = get_number(${tags[2].tag_data});
                 
-                BifEvent::generate_bacnet_read_range(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_read_range(connection()->bro_analyzer(),
                                                      connection()->bro_analyzer()->Conn(),
                                                      object_identifier.object_type,
                                                      object_identifier.instance_number,
@@ -1767,10 +1767,10 @@ refine flow BACNET_Flow += {
                 if(${tags}->size() > 3)
                     object_identifier = {${tags[3].tag_data}};
                 
-                BifEvent::generate_bacnet_life_safety_operation(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_life_safety_operation(connection()->bro_analyzer(),
                                                                 connection()->bro_analyzer()->Conn(),
                                                                 requesting_id,
-                                                                new StringVal(requesting_source),
+                                                                zeek::make_intrusive<zeek::StringVal>(requesting_source),
                                                                 request,
                                                                 object_identifier.object_type,
                                                                 object_identifier.instance_number);
@@ -1830,7 +1830,7 @@ refine flow BACNET_Flow += {
                 if( ${tags}->size() > i)
                     cov_increment = get_number(${tags[i].tag_data});
 
-                BifEvent::generate_bacnet_subscribe_cov_property(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_subscribe_cov_property(connection()->bro_analyzer(),
                                                                  connection()->bro_analyzer()->Conn(),
                                                                  subscriber_process_id,
                                                                  monitored_object_identifer.object_type,
@@ -1861,7 +1861,7 @@ refine flow BACNET_Flow += {
                 if( ${tags}->size() > 0)
                     last_received = {${tags[0].tag_data}};
 
-                BifEvent::generate_bacnet_get_event_information(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_get_event_information(connection()->bro_analyzer(),
                                                                 connection()->bro_analyzer()->Conn(),
                                                                 last_received.object_type,
                                                                 last_received.instance_number);
@@ -1893,7 +1893,7 @@ refine flow BACNET_Flow += {
         %{
             if ( ::bacnet_get_alarm_summary_ack )
             {
-                BifEvent::generate_bacnet_get_alarm_summary_ack(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_get_alarm_summary_ack(connection()->bro_analyzer(),
                                                                 connection()->bro_analyzer()->Conn());
             }
             return true;
@@ -1913,7 +1913,7 @@ refine flow BACNET_Flow += {
         %{
             if ( ::bacnet_get_enrollment_summary_ack )
             {
-                BifEvent::generate_bacnet_get_enrollment_summary_ack(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_get_enrollment_summary_ack(connection()->bro_analyzer(),
                                                                      connection()->bro_analyzer()->Conn());
             }
             return true;
@@ -1963,13 +1963,13 @@ refine flow BACNET_Flow += {
                     data_to_return = get_string(${tags[4].tag_data});
                 }
 
-                BifEvent::generate_bacnet_atomic_read_file_ack(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_atomic_read_file_ack(connection()->bro_analyzer(),
                                                                connection()->bro_analyzer()->Conn(),
                                                                end_of_file,
-                                                               new StringVal(access_type),
+                                                               zeek::make_intrusive<zeek::StringVal>(access_type),
                                                                file_start,
                                                                record_count,
-                                                               new StringVal(data_to_return));
+                                                               zeek::make_intrusive<zeek::StringVal>(data_to_return));
             }
             return true;
         %}
@@ -1998,9 +1998,9 @@ refine flow BACNET_Flow += {
                 
                 uint32 file_start = get_number(${tags[0].tag_data});
 
-                BifEvent::generate_bacnet_atomic_write_file_ack(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_atomic_write_file_ack(connection()->bro_analyzer(),
                                                                 connection()->bro_analyzer()->Conn(),
-                                                                new StringVal(access_type),
+                                                                zeek::make_intrusive<zeek::StringVal>(access_type),
                                                                 file_start);
             }
             return true;
@@ -2022,7 +2022,7 @@ refine flow BACNET_Flow += {
             if ( ::bacnet_create_object_ack )
             {
                 BACnetObjectIdentifier result_object_identifier = {${tags[0].tag_data}};
-                BifEvent::generate_bacnet_create_object_ack(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_create_object_ack(connection()->bro_analyzer(),
                                                             connection()->bro_analyzer()->Conn(),
                                                             result_object_identifier.object_type,
                                                             result_object_identifier.instance_number);
@@ -2068,14 +2068,14 @@ refine flow BACNET_Flow += {
                 
                 string property_value = parse_tag(${tags[i].tag_num},${tags[i].tag_class},${tags[i].tag_data},${tags[i].tag_length});
                 
-                BifEvent::generate_bacnet_read_property_ack(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_read_property_ack(connection()->bro_analyzer(),
                                                            connection()->bro_analyzer()->Conn(),
-                                                           new StringVal("read-property-ack"),
+                                                           zeek::make_intrusive<zeek::StringVal>("read-property-ack"),
                                                            object_identifier.object_type,
                                                            object_identifier.instance_number,
                                                            property_identifier,
                                                            property_array_index,
-                                                           new StringVal(property_value));
+                                                           zeek::make_intrusive<zeek::StringVal>(property_value));
             }
             return true;
         %}
@@ -2092,14 +2092,16 @@ refine flow BACNET_Flow += {
             if ( ::bacnet_read_property_ack )
             {
 
+                uint32 property_array_index = UINT32_MAX;
                 uint32 property_identifier;
                 BACnetObjectIdentifier object_identifier;
                 string property_value;
-                for ( uint8 x = 0; x < ${tags}->size(); ++x ){
+                for ( uint32 x = 0; x < ${tags}->size(); ++x ){
                     object_identifier = {${tags[x].tag_data}};
                     x += 1;
                     property_identifier = UINT32_MAX;
-                    for ( uint8 i = x; i < ${tags}->size(); ++i ){
+                    property_array_index = UINT32_MAX;
+                    for ( uint32 i = x; i < ${tags}->size(); ++i ){
                         if((${tags[i].named_tag} == OPENING)){
                             // Opening Tag
                             continue;
@@ -2110,16 +2112,18 @@ refine flow BACNET_Flow += {
                             }
                         }else if(${tags[i].tag_class} == 1){
                             property_identifier = get_number(${tags[i].tag_data});
+                            if ( property_identifier == 76)
+                                return true;
                         }else{
                             property_value = parse_tag(${tags[i].tag_num},${tags[i].tag_class},${tags[i].tag_data},${tags[i].tag_length});
-                            BifEvent::generate_bacnet_read_property_ack(connection()->bro_analyzer(),
+                            zeek::BifEvent::enqueue_bacnet_read_property_ack(connection()->bro_analyzer(),
                                                                     connection()->bro_analyzer()->Conn(),
-                                                                    new StringVal("read-property-multiple-ack"),
+                                                                    zeek::make_intrusive<zeek::StringVal>("read-property-multiple-ack"),
                                                                     object_identifier.object_type,
                                                                     object_identifier.instance_number,
                                                                     property_identifier,
-                                                                    UINT32_MAX,
-                                                                    new StringVal(property_value));
+                                                                    property_array_index,
+                                                                    zeek::make_intrusive<zeek::StringVal>(property_value));
                         }   
                     }
                 }
@@ -2149,7 +2153,7 @@ refine flow BACNET_Flow += {
                 uint32 vendor_id = get_number(${tags[0].tag_data});
                 uint32 service_number = get_number(${tags[1].tag_data});
 
-                BifEvent::generate_bacnet_confirmed_private_transfer_ack(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_confirmed_private_transfer_ack(connection()->bro_analyzer(),
                                                                          connection()->bro_analyzer()->Conn(),
                                                                          vendor_id,
                                                                          service_number);
@@ -2172,7 +2176,7 @@ refine flow BACNET_Flow += {
             if ( ::bacnet_vt_open_ack )
             {
                 uint8 remote_session_identifier = ${tags[0].tag_data[0]};
-                BifEvent::generate_bacnet_vt_open_ack(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_vt_open_ack(connection()->bro_analyzer(),
                                                       connection()->bro_analyzer()->Conn(),
                                                       remote_session_identifier);
             }
@@ -2201,7 +2205,7 @@ refine flow BACNET_Flow += {
                 if(data_accepted == 0){
                     accepted_count = get_number(${tags[1].tag_data});
                 }
-                BifEvent::generate_bacnet_vt_data_ack(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_vt_data_ack(connection()->bro_analyzer(),
                                                       connection()->bro_analyzer()->Conn(),
                                                       data_accepted,
                                                       accepted_count);
@@ -2251,7 +2255,7 @@ refine flow BACNET_Flow += {
                 uint8 result_flags = ${tags[i].tag_data[0]};
                 uint32 item_count = get_number(${tags[i+1].tag_data});
                 
-                BifEvent::generate_bacnet_read_range_ack(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_read_range_ack(connection()->bro_analyzer(),
                                                          connection()->bro_analyzer()->Conn(),
                                                          object_identifier.object_type,
                                                          object_identifier.instance_number,
@@ -2272,7 +2276,7 @@ refine flow BACNET_Flow += {
         %{
             if ( ::bacnet_get_event_information_ack )
             {
-                BifEvent::generate_bacnet_get_event_information_ack(connection()->bro_analyzer(),
+                zeek::BifEvent::enqueue_bacnet_get_event_information_ack(connection()->bro_analyzer(),
                                                                     connection()->bro_analyzer()->Conn());
             }
             return true;

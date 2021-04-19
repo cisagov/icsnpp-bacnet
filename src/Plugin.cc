@@ -13,15 +13,15 @@ namespace plugin
 
 using namespace plugin::ICSNPP_BACNET;
 
-plugin::Configuration Plugin::Configure() 
+zeek::plugin::Configuration Plugin::Configure() 
 {
     AddComponent(new ::analyzer::Component("BACNET",::analyzer::BACNET::BACNET_Analyzer::InstantiateAnalyzer));    
 
-    plugin::Configuration config;
+    zeek::plugin::Configuration config;
     config.name = "ICSNPP::BACnet";
     config.description = "BACnet Protocol analyzer";
     config.version.major = 1;
-    config.version.minor = 0;
+    config.version.minor = 1;
     
     return config;
 }

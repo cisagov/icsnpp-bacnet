@@ -7,4 +7,4 @@ credits = Stephen Kleinheider <stephen.kleinheider@inl.gov>
 tags =  bacnet, BACnet, ics, ICS, CISA, INL, ICSNPP, icsnpp, zeek plugin, log writer, protocol analyzer
 depends =
   zkg >=2.0
-  zeek >=3.0.0
+  zeek >=3.2.0

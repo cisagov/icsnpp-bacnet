@@ -11,7 +11,7 @@ namespace plugin
         class Plugin : public ::plugin::Plugin 
         {
             protected:
-                virtual plugin::Configuration Configure();
+                virtual zeek::plugin::Configuration Configure();
         };
 
         extern Plugin plugin;
