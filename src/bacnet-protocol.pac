@@ -815,7 +815,7 @@ type BACnet_Tag = record {
         default -> tag_header >> 4;
     };
     tag_class:  uint8   = (tag_header >> 3) & 1;
-    tag_length: uint8   = case(tag_header & 0x07) of {
+    tag_length: uint32   = case(tag_header & 0x07) of {
         5             -> extended_length.length;
         OPENING       -> 0;
         CLOSING       -> 0;
