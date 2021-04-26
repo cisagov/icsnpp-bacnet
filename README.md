@@ -6,9 +6,9 @@ Industrial Control Systems Network Protocol Parsers (ICSNPP) - BACnet.
 
 ICSNPP-BACnet is a Zeek plugin for parsing and logging fields within the BACnet protocol.
 
-This plugin was developed to be fully customizable, so if you would like to drill down into specific BACnet packets and log certain variables, add the logging functionality to [scripts/main.zeek](scripts/main.zeek). The functions within [scripts/main.zeek](scripts/main.zeek) and [src/events.bif](src/events.bif) should prove to be a good guide on how to add new logging functionality.
+This plugin was developed to be fully customizable, so if you would like to drill down into specific BACnet packets and log certain variables, add the logging functionality to [scripts/icsnpp/bacnet/main.zeek](scripts/icsnpp/bacnet/main.zeek). The functions within [scripts/icsnpp/bacnet/main.zeek](scripts/icsnpp/bacnet/main.zeek) and [src/events.bif](src/events.bif) should prove to be a good guide on how to add new logging functionality.
 
-This parser produces three log files. These log files are defined in [scripts/main.zeek](scripts/main.zeek).
+This parser produces three log files. These log files are defined in [scripts/icsnpp/bacnet/main.zeek](scripts/icsnpp/bacnet/main.zeek).
 * bacnet.log
 * bacnet_discovery.log
 * bacnet_property.log
