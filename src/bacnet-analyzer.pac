@@ -56,13 +56,13 @@
     double get_double(const_bytestring data);
     string get_string(const_bytestring data);
 
-    string parse_tag(uint8 tag_num, uint8 tag_class, const_bytestring data, uint8 tag_length);
+    string parse_tag(uint8 tag_num, uint8 tag_class, const_bytestring data, uint32 tag_length);
 
     %}
 
 %code{
     // Parses Application Tag based on tag_num and returns string representation of data
-    string parse_tag(uint8 tag_num, uint8 tag_class, const_bytestring data, uint8 tag_length)
+    string parse_tag(uint8 tag_num, uint8 tag_class, const_bytestring data, uint32 tag_length)
     {
         string str = "";
         switch(tag_num){
