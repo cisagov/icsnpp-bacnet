@@ -297,15 +297,24 @@ event bacnet_read_property_ack(c: connection,
     if( property_array_index != UINT32_MAX )
         bacnet_property$array_index = property_array_index;
     
-    if( property_identifier == 117)
-        bacnet_property$value = bacnet_units[to_count(property_value)];
-    else if( property_identifier == 79 )
-        bacnet_property$value = object_types[to_count(property_value)];
-    else if( property_identifier == 36 )
-        bacnet_property$value = event_states[to_count(property_value)];
-    else
-        bacnet_property$value = property_value;
-    
+    switch(property_identifier){
+        case 36:
+            bacnet_property$value = event_states[to_count(property_value)];
+            break;
+        case 79:
+            bacnet_property$value = object_types[to_count(property_value)];
+            break;
+        case 112:
+            bacnet_property$value = device_status[to_count(property_value)];
+            break;
+        case 117:
+            bacnet_property$value = bacnet_units[to_count(property_value)];
+            break;
+        default:
+            bacnet_property$value = property_value;
+            break;
+    }
+
     Log::write(LOG_BACNET_PROPERTY, bacnet_property);
 }
 
