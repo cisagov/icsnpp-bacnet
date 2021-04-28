@@ -2128,10 +2128,11 @@ refine flow BACNET_Flow += {
         %{
             if ( ::bacnet_read_property_ack )
             {
-
                 uint32 property_array_index = UINT32_MAX;
                 uint32 property_identifier;
                 BACnetObjectIdentifier object_identifier;
+                uint8 tag_status = 4;
+                uint8 property_exists = 0;
                 string property_value;
                 for ( uint32 x = 0; x < ${tags}->size(); ++x ){
                     object_identifier = {${tags[x].tag_data}};
@@ -2141,26 +2142,53 @@ refine flow BACNET_Flow += {
                     for ( uint32 i = x; i < ${tags}->size(); ++i ){
                         if((${tags[i].named_tag} == OPENING)){
                             // Opening Tag
+                            tag_status = ${tags[i].tag_num};
+                            property_exists = 0;
                             continue;
                         }else if(${tags[i].named_tag} == CLOSING){
+                            // Closing Tag
                             if(${tags[i].tag_num} == 1){
                                 x = i;
                                 break;
+                            }else if(property_exists == 0){
+                                // If we get to this close tag and a property hasn't been written yet, write to log with null value
+                                zeek::BifEvent::enqueue_bacnet_read_property_ack(connection()->bro_analyzer(),
+                                                                                 connection()->bro_analyzer()->Conn(),
+                                                                                 zeek::make_intrusive<zeek::StringVal>("read-property-multiple-ack"),
+                                                                                 object_identifier.object_type,
+                                                                                 object_identifier.instance_number,
+                                                                                 property_identifier,
+                                                                                 property_array_index,
+                                                                                 zeek::make_intrusive<zeek::StringVal>(""));
                             }
                         }else if(${tags[i].tag_class} == 1){
                             property_identifier = get_unsigned(${tags[i].tag_data});
+                            // If property identifier is 76 (object-list), the following values will be object identifiers (identifier 75)
                             if ( property_identifier == 76)
-                                return true;
+                                property_identifier = 75;
+                        }else if(tag_status == 5){
+                            i += 2;
+                            property_exists = 1;
+                            property_value = "PropertyError";
+                            zeek::BifEvent::enqueue_bacnet_read_property_ack(connection()->bro_analyzer(),
+                                                                             connection()->bro_analyzer()->Conn(),
+                                                                             zeek::make_intrusive<zeek::StringVal>("read-property-multiple-ack"),
+                                                                             object_identifier.object_type,
+                                                                             object_identifier.instance_number,
+                                                                             property_identifier,
+                                                                             property_array_index,
+                                                                             zeek::make_intrusive<zeek::StringVal>(property_value));
                         }else{
                             property_value = parse_tag(${tags[i].tag_num},${tags[i].tag_class},${tags[i].tag_data},${tags[i].tag_length});
+                            property_exists = 1;
                             zeek::BifEvent::enqueue_bacnet_read_property_ack(connection()->bro_analyzer(),
-                                                                    connection()->bro_analyzer()->Conn(),
-                                                                    zeek::make_intrusive<zeek::StringVal>("read-property-multiple-ack"),
-                                                                    object_identifier.object_type,
-                                                                    object_identifier.instance_number,
-                                                                    property_identifier,
-                                                                    property_array_index,
-                                                                    zeek::make_intrusive<zeek::StringVal>(property_value));
+                                                                             connection()->bro_analyzer()->Conn(),
+                                                                             zeek::make_intrusive<zeek::StringVal>("read-property-multiple-ack"),
+                                                                             object_identifier.object_type,
+                                                                             object_identifier.instance_number,
+                                                                             property_identifier,
+                                                                             property_array_index,
+                                                                             zeek::make_intrusive<zeek::StringVal>(property_value));
                         }   
                     }
                 }
