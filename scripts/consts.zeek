@@ -655,6 +655,54 @@ export {
     } &default = function(n: count): string {return fmt("Unknown Segmented Supported Status -0x%02x", n); };
 
     ###############################################################################################
+    #######################################  Logging Type  ########################################
+    ###############################################################################################
+    const logging_type {	
+        [0] = "polled",
+        [1] = "cov",
+        [2] = "triggered",
+    } &default = function(n: count): string {return fmt("Vendor Specific (%d)", n); };
+
+    ###############################################################################################
+    ########################################  Reliability  ########################################
+    ###############################################################################################
+    const reliability {	    
+        [0] = "no-fault-detected",
+        [1] = "no-sensor",
+        [2] = "over-range",
+        [3] = "under-range",
+        [4] = "open-loop",
+        [5] = "shorted-loop",
+        [6] = "no-output",
+        [7] = "unreliable-other",
+        [8] = "process-error",
+        [9] = "multi-state-fault",
+        [10] = "configuration-error",
+        [12] = "communication-failure",
+        [13] = "member-fault",
+        [14] = "monitored-object-fault",
+        [15] = "tripped",
+        [16] = "lamp-failure",
+        [17] = "activation-failure",
+        [18] = "renew-dhcp-failure",
+        [19] = "renew-fd-registration-failure",
+        [20] = "restart-auto-negotiation-failure",
+        [21] = "restart-failure",
+        [22] = "proprietary-command-failure",
+        [23] = "faults-listed",
+        [24] = "referenced-object-fault",
+    } &default = function(n: count): string {return fmt("Vendor Specific (%d)", n); };
+
+    ###############################################################################################
+    #######################################  Notify Type  ########################################
+    ###############################################################################################
+    const notify_type {	    
+        [0] = "alarm",
+        [1] = "event",
+        [2] = "ack-notification",
+    } &default = function(n: count): string {return fmt("Vendor Specific (%d)", n); };
+
+    ###############################################################################################
     ####################################  BACnet Object Types  ####################################
     ###############################################################################################
     const object_types = {

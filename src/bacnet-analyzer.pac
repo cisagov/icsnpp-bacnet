@@ -2151,7 +2151,7 @@ refine flow BACNET_Flow += {
                                 x = i;
                                 break;
                             }else if(property_exists == 0){
-                                // If we get to this close tag and a property hasn't been written yet, write to log with null value
+                                // If we get to this close tag and a property hasn't been written yet, write to log with null
                                 zeek::BifEvent::enqueue_bacnet_read_property_ack(connection()->bro_analyzer(),
                                                                                  connection()->bro_analyzer()->Conn(),
                                                                                  zeek::make_intrusive<zeek::StringVal>("read-property-multiple-ack"),
@@ -2302,6 +2302,8 @@ refine flow BACNET_Flow += {
     ##      - property_array_index          ->  Property Array Index
     ##      - result_flags                  ->  Result Flags
     ##      - item_count                    ->  Item Count
+    ##  TODO: Add logic to send read-range items to bacnet_property.log file. Items utilize context-
+    ##        specific flags
     ## ------------------------------------------------------------------------------------------------
     function process_read_range_ack(tags: BACnet_Tag[]): bool
         %{

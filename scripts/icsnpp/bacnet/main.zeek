@@ -301,8 +301,14 @@ event bacnet_read_property_ack(c: connection,
         case 36:
             bacnet_property$value = event_states[to_count(property_value)];
             break;
+        case 72:
+            bacnet_property$value = notify_type[to_count(property_value)];
+            break;
         case 79:
             bacnet_property$value = object_types[to_count(property_value)];
+            break;
+        case 103:
+            bacnet_property$value = reliability[to_count(property_value)];
             break;
         case 107:
             bacnet_property$value = segmentation_supported_status[to_count(property_value)];
@@ -312,6 +318,9 @@ event bacnet_read_property_ack(c: connection,
             break;
         case 117:
             bacnet_property$value = bacnet_units[to_count(property_value)];
+            break;
+        case 197:
+            bacnet_property$value = logging_type[to_count(property_value)];
             break;
         default:
             if (property_value != "")
@@ -346,13 +355,36 @@ event bacnet_write_property(c: connection,
     if( property_array_index != UINT32_MAX )
         bacnet_property$array_index = property_array_index;
     
-    if( property_identifier == 117)
-        bacnet_property$value = bacnet_units[to_count(property_value)];
-    else if( property_identifier == 79 )
-        bacnet_property$value = object_types[to_count(property_value)];
-    else
-        if (property_value != "")
-            bacnet_property$value = property_value;
+    switch(property_identifier){
+        case 36:
+            bacnet_property$value = event_states[to_count(property_value)];
+            break;
+        case 72:
+            bacnet_property$value = notify_type[to_count(property_value)];
+            break;
+        case 79:
+            bacnet_property$value = object_types[to_count(property_value)];
+            break;
+        case 103:
+            bacnet_property$value = reliability[to_count(property_value)];
+            break;
+        case 107:
+            bacnet_property$value = segmentation_supported_status[to_count(property_value)];
+            break;
+        case 112:
+            bacnet_property$value = device_status[to_count(property_value)];
+            break;
+        case 117:
+            bacnet_property$value = bacnet_units[to_count(property_value)];
+            break;
+        case 197:
+            bacnet_property$value = logging_type[to_count(property_value)];
+            break;
+        default:
+            if (property_value != "")
+                bacnet_property$value = property_value;
+            break;
+    }
     
     Log::write(LOG_BACNET_PROPERTY, bacnet_property);
 }
@@ -373,5 +405,53 @@ event bacnet_property_error(c: connection,
     bacnet_property$pdu_service = "ERROR: " + confirmed_service_choice[pdu_service];
     bacnet_property$object_type = error_codes[result_code];
 
+    Log::write(LOG_BACNET_PROPERTY, bacnet_property);
+}
+
+event bacnet_read_range(c: connection,
+                        object_type: count,
+                        instance_number: count,
+                        property_identifier: count,
+                        property_array_index: count){
+
+    local bacnet_property: BACnet_Property;
+    bacnet_property$ts  = network_time();
+    bacnet_property$uid = c$uid;
+    bacnet_property$id  = c$id;
+
+    bacnet_property$pdu_service = "read-range-request";
+    bacnet_property$object_type = object_types[object_type]; 
+    bacnet_property$instance_number = instance_number;
+    bacnet_property$property = property_identifiers[property_identifier];
+    
+    if( property_array_index != UINT32_MAX )
+        bacnet_property$array_index = property_array_index;
+    
+    Log::write(LOG_BACNET_PROPERTY, bacnet_property);
+}
+
+event bacnet_read_range_ack(c: connection,
+                            object_type: count,
+                            instance_number: count,
+                            property_identifier: count,
+                            property_array_index: count,
+                            result_flags: count,
+                            item_count: count){
+
+    local bacnet_property: BACnet_Property;
+    bacnet_property$ts  = network_time();
+    bacnet_property$uid = c$uid;
+    bacnet_property$id  = c$id;
+
+    bacnet_property$pdu_service = "read-range-ack";
+    bacnet_property$object_type = object_types[object_type]; 
+    bacnet_property$instance_number = instance_number;
+    bacnet_property$property = property_identifiers[property_identifier];
+    
+    if( property_array_index != UINT32_MAX )
+        bacnet_property$array_index = property_array_index;
+    
+    bacnet_property$value = fmt("item_count: %d",item_count);
+    
     Log::write(LOG_BACNET_PROPERTY, bacnet_property);
 }
