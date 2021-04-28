@@ -645,6 +645,16 @@ export {
     } &default = function(n: count): string {return fmt("Vendor Specific (%d)", n); };
 
     ###############################################################################################
+    ###############################  Segmentation Supported Status  ###############################
+    ###############################################################################################
+    const segmentation_supported_status {	
+        [0] = "segmented-both",
+        [1] = "segmented-transmit",
+        [2] = "segmented-receive",
+        [3] = "no-segmentation",
+    } &default = function(n: count): string {return fmt("Unknown Segmented Supported Status -0x%02x", n); };
+
+    ###############################################################################################
     ####################################  BACnet Object Types  ####################################
     ###############################################################################################
     const object_types = {

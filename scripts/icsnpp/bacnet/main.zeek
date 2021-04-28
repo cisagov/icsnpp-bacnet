@@ -304,6 +304,9 @@ event bacnet_read_property_ack(c: connection,
         case 79:
             bacnet_property$value = object_types[to_count(property_value)];
             break;
+        case 107:
+            bacnet_property$value = segmentation_supported_status[to_count(property_value)];
+            break;
         case 112:
             bacnet_property$value = device_status[to_count(property_value)];
             break;
@@ -311,7 +314,8 @@ event bacnet_read_property_ack(c: connection,
             bacnet_property$value = bacnet_units[to_count(property_value)];
             break;
         default:
-            bacnet_property$value = property_value;
+            if (property_value != "")
+                bacnet_property$value = property_value;
             break;
     }
 
@@ -347,7 +351,8 @@ event bacnet_write_property(c: connection,
     else if( property_identifier == 79 )
         bacnet_property$value = object_types[to_count(property_value)];
     else
-        bacnet_property$value = property_value;
+        if (property_value != "")
+            bacnet_property$value = property_value;
     
     Log::write(LOG_BACNET_PROPERTY, bacnet_property);
 }
