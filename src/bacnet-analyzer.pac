@@ -9,6 +9,8 @@
 
 %header{
 
+    static string object_types[] = {"analog-input","analog-output","analog-value","binary-input","binary-output","binary-value","calendar","command","device","event-enrollment","file","group","loop","multi-state-input","multi-state-output","notification-class","program","schedule","averaging","multi-state-value","trend-log","life-safety-point","life-safety-zone","accumulator","pulse-converter","event-log","global-group","trend-log-multiple","load-control","structured-view","access-door","access-credential","access-point","access-rights","access-user","access-zone","credential-data-input","network-security","bitstring-value","characterstring-value","date-pattern-value","date-value","datetime-pattern-value","datetime-value","integer-value","large-analog-value","octetstring-value","positive-integer-value","time-pattern-value","time-value"};
+    
     // BACnetObjectIdentifier Object
     typedef struct BACnetObjectIdentifier {
         uint32 object_type, instance_number;
@@ -70,7 +72,7 @@
             case 0: // Null
                 return str;
             case 1: // Boolean
-                return tag_length==1 ? "True" : "False";
+                return tag_length==1 ? "true" : "false";
             case 2: // Unsigned Integer
                 return to_string(get_unsigned(data));
             case 3: // Signed Integer
@@ -100,7 +102,9 @@
                 str += fmt("%d:%d:%d.%d",data[0],data[1],data[2],data[3]);
                 return str;
             case 12: // BACnetObjectIdentifier
-                str += fmt("ObjectIdentifier: %d, %d",(data[0] << 2) + (data[1] >> 6),((data[1] & 0x3f) << 16) + (data[2] << 8) + data[3]);
+                str += object_types[(data[0] << 2) + (data[1] >> 6)];
+                str += fmt(": %d",((data[1] & 0x3f) << 16) + (data[2] << 8) + data[3]);
+                //str += fmt("ObjectIdentifier: %d, %d",(data[0] << 2) + (data[1] >> 6),((data[1] & 0x3f) << 16) + (data[2] << 8) + data[3]);
                 return str;
             default:
                 return str;
