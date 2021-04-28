@@ -301,6 +301,8 @@ event bacnet_read_property_ack(c: connection,
         bacnet_property$value = bacnet_units[to_count(property_value)];
     else if( property_identifier == 79 )
         bacnet_property$value = object_types[to_count(property_value)];
+    else if( property_identifier == 36 )
+        bacnet_property$value = event_states[to_count(property_value)];
     else
         bacnet_property$value = property_value;
     
