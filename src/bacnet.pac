@@ -1,5 +1,5 @@
-%include binpac.pac
-%include bro.pac
+%include zeek/binpac.pac
+%include zeek/zeek.pac
 
 %extern{
     #include "events.bif.h"
@@ -10,7 +10,7 @@ analyzer BACNET withcontext {
     flow:       BACNET_Flow;
 };
 
-connection BACNET_Conn(bro_analyzer: BroAnalyzer) {
+connection BACNET_Conn(zeek_analyzer: ZeekAnalyzer) {
     upflow   = BACNET_Flow(true);
     downflow = BACNET_Flow(false);
 };
