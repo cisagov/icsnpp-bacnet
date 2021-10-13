@@ -5,7 +5,11 @@
 
 #include "events.bif.h"
 
+#if ZEEK_VERSION_NUMBER >= 40100
 #include <zeek/packet_analysis/protocol/udp/UDPSessionAdapter.h>
+#else
+#include <zeek/analyzer/protocol/udp/UDP.h>
+#endif
 
 #include "bacnet_pac.h"
 
