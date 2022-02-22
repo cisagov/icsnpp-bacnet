@@ -117,7 +117,7 @@ event bacnet_header(c: connection,
     if (bvlc_function == 0)
         bacnet_log$result_code = bvlc_results[result_code];
 
-    if(pdu_type != -1){
+    if(pdu_type in apdu_types){
         bacnet_log$pdu_type = apdu_types[pdu_type];
 
         if (pdu_type != 1)
