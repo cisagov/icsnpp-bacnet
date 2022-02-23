@@ -312,7 +312,7 @@ event bacnet_read_property_ack(c: connection,
     if( property_array_index != UINT32_MAX )
         bacnet_property$array_index = property_array_index;
 
-    if (is_num(property_value)) {
+    if (property_value != "" && is_num(property_value)) {
         switch(property_identifier){
             case 36:
                 bacnet_property$value = event_states[to_count(property_value)];
