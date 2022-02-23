@@ -312,36 +312,45 @@ event bacnet_read_property_ack(c: connection,
     if( property_array_index != UINT32_MAX )
         bacnet_property$array_index = property_array_index;
 
-    switch(property_identifier){
-        case 36:
-            bacnet_property$value = event_states[to_count(property_value)];
-            break;
-        case 72:
-            bacnet_property$value = notify_type[to_count(property_value)];
-            break;
-        case 79:
-            bacnet_property$value = object_types[to_count(property_value)];
-            break;
-        case 103:
-            bacnet_property$value = reliability[to_count(property_value)];
-            break;
-        case 107:
-            bacnet_property$value = segmentation_supported_status[to_count(property_value)];
-            break;
-        case 112:
-            bacnet_property$value = device_status[to_count(property_value)];
-            break;
-        case 117:
-            bacnet_property$value = bacnet_units[to_count(property_value)];
-            break;
-        case 197:
-            bacnet_property$value = logging_type[to_count(property_value)];
-            break;
-        default:
-            if (property_value != "")
-                bacnet_property$value = property_value;
-            break;
-    }
+    if (/[0-9]+/ == property_value)
+        {
+        switch(property_identifier)
+            {
+            case 36:
+                bacnet_property$value = event_states[to_count(property_value)];
+                break;
+            case 72:
+                bacnet_property$value = notify_type[to_count(property_value)];
+                break;
+            case 79:
+                bacnet_property$value = object_types[to_count(property_value)];
+                break;
+            case 103:
+                bacnet_property$value = reliability[to_count(property_value)];
+                break;
+            case 107:
+                bacnet_property$value = segmentation_supported_status[to_count(property_value)];
+                break;
+            case 112:
+                bacnet_property$value = device_status[to_count(property_value)];
+                break;
+            case 117:
+                bacnet_property$value = bacnet_units[to_count(property_value)];
+                break;
+            case 197:
+                bacnet_property$value = logging_type[to_count(property_value)];
+                break;
+            default:
+                if (property_value != "")
+                    bacnet_property$value = property_value;
+                break;
+            }
+        }
+        else
+        {
+        if (property_value != "")
+            bacnet_property$value = property_value;
+        }
 
     Log::write(LOG_BACNET_PROPERTY, bacnet_property);
 }
