@@ -2,6 +2,7 @@
 build_dir = build/ICSNPP_Bacnet.tgz
 script_dir = build/scripts/icsnpp/bacnet
 build_command = ./configure && make
+test_command = unset -v CXX CXXFLAGS LD LDFLAGS && cd tests && PATH=$(zkg config plugin_dir)/packages/spicy-plugin/bin:$PATH btest -d -j $(nproc)
 description = BACnet plugin for parsing and logging of the BACnet (building automation and control) protocol - CISA ICSNPP
 credits = Stephen Kleinheider <stephen.kleinheider@inl.gov>
 tags =  bacnet, BACnet, ics, ICS, CISA, INL, ICSNPP, icsnpp, zeek plugin, log writer, protocol analyzer
