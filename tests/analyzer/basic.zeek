@@ -6,4 +6,4 @@
 #
 # @TEST-DOC: Test BACnet analyzer with small trace.
 
-@load analyzer
+@load icsnpp/bacnet
