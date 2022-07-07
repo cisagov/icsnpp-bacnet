@@ -247,7 +247,7 @@ export {
     ###############################################################################################
     #################################  Confirmed Service Choices  #################################
     ###############################################################################################
-    const confirmed_service_choice {	
+    const confirmed_service_choice: table[count] of string = {
         [0] = "acknowledge_alarm",
         [1] = "confirmed_cov_notification",
         [2] = "confirmed_event_notification",
