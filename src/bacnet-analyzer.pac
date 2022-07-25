@@ -208,12 +208,13 @@ refine flow BACNET_Flow += {
     ##      - result_code       -> Error Code or Reject/Abort Reason
     ##          + Matches error_codes, reject_reasons, or abort_reasons in consts.zeek
     ## ------------------------------------------------------------------------------------------------
-    function process_bacnet_header(bvlc_function: uint8, pdu_type: int8, pdu_service: int8, invoke_id: uint8, result_code: int8): bool
+    function process_bacnet_header(is_orig: bool, bvlc_function: uint8, pdu_type: int8, pdu_service: int8, invoke_id: uint8, result_code: int8): bool
         %{
             if ( ::bacnet_header )
             {
                 zeek::BifEvent::enqueue_bacnet_header(connection()->zeek_analyzer(),
                                                 connection()->zeek_analyzer()->Conn(),
+                                                is_orig,
                                                 bvlc_function,
                                                 pdu_type,
                                                 pdu_service,
@@ -226,6 +227,7 @@ refine flow BACNET_Flow += {
                 {
                     zeek::BifEvent::enqueue_bacnet_property_error(connection()->zeek_analyzer(),
                                                             connection()->zeek_analyzer()->Conn(),
+                                                            is_orig,
                                                             pdu_type,
                                                             pdu_service,
                                                             result_code);
@@ -264,7 +266,7 @@ refine flow BACNET_Flow += {
     ##      - segmentation      -> Segmentation Supported
     ##      - vendor_id         -> Vendor ID
     ## ------------------------------------------------------------------------------------------------
-    function process_i_am(tags: BACnet_Tag[]): bool
+    function process_i_am(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_i_am )
             {
@@ -275,6 +277,7 @@ refine flow BACNET_Flow += {
 
                 zeek::BifEvent::enqueue_bacnet_i_am(connection()->zeek_analyzer(),
                                               connection()->zeek_analyzer()->Conn(),
+                                              is_orig,
                                               device_identifier.object_type,
                                               device_identifier.instance_number,
                                               max_apdu,
@@ -302,7 +305,7 @@ refine flow BACNET_Flow += {
     ##      - object_instance_number    -> Instance Number from Object Identifier
     ##      - object_name               -> Object Name
     ## ------------------------------------------------------------------------------------------------
-    function process_i_have(tags: BACnet_Tag[]): bool
+    function process_i_have(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_i_have )
             {
@@ -312,6 +315,7 @@ refine flow BACNET_Flow += {
 
                 zeek::BifEvent::enqueue_bacnet_i_have(connection()->zeek_analyzer(),
                                                  connection()->zeek_analyzer()->Conn(),
+                                                 is_orig,
                                                  device_identifier.object_type,
                                                  device_identifier.instance_number,
                                                  object_identifier.object_type,
@@ -344,7 +348,7 @@ refine flow BACNET_Flow += {
     ##      - monitored_instance_number     -> Instance Number from Monitored Device Identifier
     ##      - time_remaining                -> Time Remaining
     ## ------------------------------------------------------------------------------------------------
-    function process_unconfirmed_cov_notification(tags: BACnet_Tag[]): bool
+    function process_unconfirmed_cov_notification(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_unconfirmed_cov_notification )
             {
@@ -355,6 +359,7 @@ refine flow BACNET_Flow += {
 
                 zeek::BifEvent::enqueue_bacnet_unconfirmed_cov_notification(connection()->zeek_analyzer(),
                                                                        connection()->zeek_analyzer()->Conn(),
+                                                                       is_orig,
                                                                        subscriber_identifier,
                                                                        initiating_identifier.object_type,
                                                                        initiating_identifier.instance_number,
@@ -411,7 +416,7 @@ refine flow BACNET_Flow += {
     ##      - from_state                    -> From State
     ##      - to_state                      -> To State
     ## ------------------------------------------------------------------------------------------------
-    function process_unconfirmed_event_notification(tags: BACnet_Tag[]): bool
+    function process_unconfirmed_event_notification(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_unconfirmed_event_notification )
             {
@@ -466,6 +471,7 @@ refine flow BACNET_Flow += {
 
                 zeek::BifEvent::enqueue_bacnet_unconfirmed_event_notification(connection()->zeek_analyzer(),
                                                                          connection()->zeek_analyzer()->Conn(),
+                                                                         is_orig,
                                                                          process_identifier,
                                                                          initiating_identifier.object_type,
                                                                          initiating_identifier.instance_number,
@@ -498,7 +504,7 @@ refine flow BACNET_Flow += {
     ##      - vendor_id         -> Vendor ID
     ##      - service_number    -> Service Number
     ## ------------------------------------------------------------------------------------------------
-    function process_unconfirmed_private_transfer(tags: BACnet_Tag[]): bool
+    function process_unconfirmed_private_transfer(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_unconfirmed_private_transfer )
             {
@@ -506,6 +512,7 @@ refine flow BACNET_Flow += {
                 uint32 service_number = get_unsigned(${tags[1].tag_data});
                 zeek::BifEvent::enqueue_bacnet_unconfirmed_private_transfer(connection()->zeek_analyzer(),
                                                                        connection()->zeek_analyzer()->Conn(),
+                                                                       is_orig,
                                                                        vendor_id,
                                                                        service_number);
             }
@@ -530,7 +537,7 @@ refine flow BACNET_Flow += {
     ##      - message_priority  -> Message Priority
     ##      - message           -> Message
     ## ------------------------------------------------------------------------------------------------
-    function process_unconfirmed_text_message(tags: BACnet_Tag[]): bool
+    function process_unconfirmed_text_message(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_unconfirmed_text_message )
             {
@@ -546,6 +553,7 @@ refine flow BACNET_Flow += {
 
                 zeek::BifEvent::enqueue_bacnet_unconfirmed_text_message(connection()->zeek_analyzer(),
                                                                    connection()->zeek_analyzer()->Conn(),
+                                                                   is_orig,
                                                                    object_identifier.object_type,
                                                                    object_identifier.instance_number,
                                                                    message_priority,
@@ -572,7 +580,7 @@ refine flow BACNET_Flow += {
     ##      - second        -> Time - Second
     ##      - millisecond   -> Time - Millisecond
     ## ------------------------------------------------------------------------------------------------
-    function process_time_synchronization(tags: BACnet_Tag[]): bool
+    function process_time_synchronization(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_time_synchronization )
             {
@@ -580,6 +588,7 @@ refine flow BACNET_Flow += {
                 BACnetTime time = {${tags[1].tag_data}};
                 zeek::BifEvent::enqueue_bacnet_time_synchronization(connection()->zeek_analyzer(),
                                                                connection()->zeek_analyzer()->Conn(),
+                                                               is_orig,
                                                                date.year,
                                                                date.month,
                                                                date.day,
@@ -614,7 +623,7 @@ refine flow BACNET_Flow += {
     ##      - instance_number   -> Instance Number from Object Identifier
     ##      - object_name       -> Object Name
     ## ------------------------------------------------------------------------------------------------
-    function process_who_has(tags: BACnet_Tag[]): bool
+    function process_who_has(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_who_has )
             {
@@ -643,6 +652,7 @@ refine flow BACNET_Flow += {
 
                 zeek::BifEvent::enqueue_bacnet_who_has(connection()->zeek_analyzer(),
                                                   connection()->zeek_analyzer()->Conn(),
+                                                  is_orig,
                                                   low_limit,
                                                   high_limit,
                                                   object_identifier.object_type,
@@ -667,7 +677,7 @@ refine flow BACNET_Flow += {
     ##      - low_limit     -> Device Instance Range Low Limit
     ##      - high_limit    -> Device Instance Range High Limit
     ## ------------------------------------------------------------------------------------------------
-    function process_who_is(tags: BACnet_Tag[]): bool
+    function process_who_is(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_who_is )
             {
@@ -679,6 +689,7 @@ refine flow BACNET_Flow += {
 
                 zeek::BifEvent::enqueue_bacnet_who_is(connection()->zeek_analyzer(),
                                                  connection()->zeek_analyzer()->Conn(),
+                                                 is_orig,
                                                  low_limit,
                                                  high_limit);
             }
@@ -703,7 +714,7 @@ refine flow BACNET_Flow += {
     ##      - second        -> Time - Second
     ##      - millisecond   -> Time - Millisecond
     ## ------------------------------------------------------------------------------------------------
-    function process_utc_time_synchronization(tags: BACnet_Tag[]): bool
+    function process_utc_time_synchronization(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_utc_time_synchronization )
             {
@@ -712,6 +723,7 @@ refine flow BACNET_Flow += {
 
                 zeek::BifEvent::enqueue_bacnet_utc_time_synchronization(connection()->zeek_analyzer(),
                                                                    connection()->zeek_analyzer()->Conn(),
+                                                                   is_orig,
                                                                    date.year,
                                                                    date.month,
                                                                    date.day,
@@ -741,7 +753,7 @@ refine flow BACNET_Flow += {
     ##      - group_number      -> Group Number
     ##      - write_priority    -> Write Priority
     ## ------------------------------------------------------------------------------------------------
-    function process_write_group(tags: BACnet_Tag[]): bool
+    function process_write_group(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_write_group )
             {
@@ -750,6 +762,7 @@ refine flow BACNET_Flow += {
 
                 zeek::BifEvent::enqueue_bacnet_write_group(connection()->zeek_analyzer(),
                                                       connection()->zeek_analyzer()->Conn(),
+                                                      is_orig,
                                                       group_number,
                                                       write_priority);
             }
@@ -777,7 +790,7 @@ refine flow BACNET_Flow += {
     ##      - initiating_instance_number    -> Instance Number from Initiating Device Identifier
     ##      - time_remaining                -> Time Remaining
     ## ------------------------------------------------------------------------------------------------
-    function process_unconfirmed_cov_notification_multiple(tags: BACnet_Tag[]): bool
+    function process_unconfirmed_cov_notification_multiple(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_unconfirmed_cov_notification_multiple )
             {
@@ -787,6 +800,7 @@ refine flow BACNET_Flow += {
 
                 zeek::BifEvent::enqueue_bacnet_unconfirmed_cov_notification_multiple(connection()->zeek_analyzer(),
                                                                                 connection()->zeek_analyzer()->Conn(),
+                                                                                is_orig,
                                                                                 subscriber_identifier,
                                                                                 initiating_identifier.object_type,
                                                                                 initiating_identifier.instance_number,
@@ -828,7 +842,7 @@ refine flow BACNET_Flow += {
     ##      - event_instance_number     -> Instance Number from Event Object Identifier Identifier
     ##      - event_state               -> Event State
     ## ------------------------------------------------------------------------------------------------
-    function process_acknowledge_alarm(tags: BACnet_Tag[]): bool
+    function process_acknowledge_alarm(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_acknowledge_alarm )
             {
@@ -838,6 +852,7 @@ refine flow BACNET_Flow += {
 
                 zeek::BifEvent::enqueue_bacnet_acknowledge_alarm(connection()->zeek_analyzer(),
                                                             connection()->zeek_analyzer()->Conn(),
+                                                            is_orig,
                                                             acknowledge_process_id,
                                                             event_identifier.object_type,
                                                             event_identifier.instance_number,
@@ -869,7 +884,7 @@ refine flow BACNET_Flow += {
     ##      - monitored_instance_number     -> Instance Number from Monitored Device Identifier
     ##      - time_remaining                -> Time Remaining
     ## ------------------------------------------------------------------------------------------------
-    function process_confirmed_cov_notification(tags: BACnet_Tag[]): bool
+    function process_confirmed_cov_notification(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_confirmed_cov_notification )
             {
@@ -880,6 +895,7 @@ refine flow BACNET_Flow += {
 
                 zeek::BifEvent::enqueue_bacnet_confirmed_cov_notification(connection()->zeek_analyzer(),
                                                                      connection()->zeek_analyzer()->Conn(),
+                                                                     is_orig,
                                                                      subscriber_identifier,
                                                                      initiating_identifier.object_type,
                                                                      initiating_identifier.instance_number,
@@ -936,7 +952,7 @@ refine flow BACNET_Flow += {
     ##      - from_state                    -> From State
     ##      - to_state                      -> To State
     ## ------------------------------------------------------------------------------------------------
-    function process_confirmed_event_notification(tags: BACnet_Tag[]): bool
+    function process_confirmed_event_notification(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_confirmed_event_notification )
             {
@@ -991,6 +1007,7 @@ refine flow BACNET_Flow += {
 
                 zeek::BifEvent::enqueue_bacnet_confirmed_event_notification(connection()->zeek_analyzer(),
                                                                        connection()->zeek_analyzer()->Conn(),
+                                                                       is_orig,
                                                                        process_identifier,
                                                                        initiating_identifier.object_type,
                                                                        initiating_identifier.instance_number,
@@ -1017,12 +1034,13 @@ refine flow BACNET_Flow += {
     ## Get-Alarm-Summary Event Generation:
     ##      - N/A - Deprecated
     ## ------------------------------------------------------------------------------------------------
-    function process_get_alarm_summary(tags: BACnet_Tag[]): bool
+    function process_get_alarm_summary(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_get_alarm_summary )
             {
                 zeek::BifEvent::enqueue_bacnet_get_alarm_summary(connection()->zeek_analyzer(),
-                                                            connection()->zeek_analyzer()->Conn());
+                                                                 connection()->zeek_analyzer()->Conn(),
+                                                                 is_orig);
             }
             return true;
         %}
@@ -1037,12 +1055,13 @@ refine flow BACNET_Flow += {
     ## Get-Enrollment-Summary Event Generation:
     ##      - N/A - Deprecated
     ## ------------------------------------------------------------------------------------------------
-    function process_get_enrollment_summary(tags: BACnet_Tag[]): bool
+    function process_get_enrollment_summary(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_get_enrollment_summary )
             {
                 zeek::BifEvent::enqueue_bacnet_get_enrollment_summary(connection()->zeek_analyzer(),
-                                                                 connection()->zeek_analyzer()->Conn());
+                                                                      connection()->zeek_analyzer()->Conn(),
+                                                                      is_orig);
             }
             return true;
         %}
@@ -1068,7 +1087,7 @@ refine flow BACNET_Flow += {
     ##      - issue_confirmed               ->  Issue Confirmed Notification
     ##      - lifetime                      ->  Lifetime
     ## ------------------------------------------------------------------------------------------------
-    function process_subscribe_cov(tags: BACnet_Tag[]): bool
+    function process_subscribe_cov(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_subscribe_cov )
             {
@@ -1092,6 +1111,7 @@ refine flow BACNET_Flow += {
 
                 zeek::BifEvent::enqueue_bacnet_subscribe_cov(connection()->zeek_analyzer(),
                                                         connection()->zeek_analyzer()->Conn(),
+                                                        is_orig,
                                                         subscriber_process_identifier,
                                                         monitored_identifier.object_type,
                                                         monitored_identifier.instance_number,
@@ -1124,7 +1144,7 @@ refine flow BACNET_Flow += {
     ##      - file_start            -> File Start Position/File Start Record
     ##      - requested_count       -> Requested Octet Count/Requested Record Count
     ## ------------------------------------------------------------------------------------------------
-    function process_atomic_read_file(tags: BACnet_Tag[]): bool
+    function process_atomic_read_file(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_atomic_read_file )
             {
@@ -1140,6 +1160,7 @@ refine flow BACNET_Flow += {
 
                 zeek::BifEvent::enqueue_bacnet_atomic_read_file(connection()->zeek_analyzer(),
                                                            connection()->zeek_analyzer()->Conn(),
+                                                           is_orig,
                                                            file_identifier.object_type,
                                                            file_identifier.instance_number,
                                                            zeek::make_intrusive<zeek::StringVal>(access_type),
@@ -1174,7 +1195,7 @@ refine flow BACNET_Flow += {
     ##      - requested_count       -> Record Count
     ##      - data_to_write         -> File Data/Record Data
     ## ------------------------------------------------------------------------------------------------
-    function process_atomic_write_file(tags: BACnet_Tag[]): bool
+    function process_atomic_write_file(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_atomic_write_file )
             {
@@ -1197,6 +1218,7 @@ refine flow BACNET_Flow += {
 
                 zeek::BifEvent::enqueue_bacnet_atomic_write_file(connection()->zeek_analyzer(),
                                                             connection()->zeek_analyzer()->Conn(),
+                                                            is_orig,
                                                             file_identifier.object_type,
                                                             file_identifier.instance_number,
                                                             zeek::make_intrusive<zeek::StringVal>(access_type),
@@ -1227,7 +1249,7 @@ refine flow BACNET_Flow += {
     ##      - property_identifier           ->  Property Identifier
     ##      - property_array_index          ->  Property Array Index
     ## ------------------------------------------------------------------------------------------------
-    function process_add_list_element(tags: BACnet_Tag[]): bool
+    function process_add_list_element(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_add_list_element )
             {
@@ -1240,6 +1262,7 @@ refine flow BACNET_Flow += {
 
                 zeek::BifEvent::enqueue_bacnet_add_list_element(connection()->zeek_analyzer(),
                                                            connection()->zeek_analyzer()->Conn(),
+                                                           is_orig,
                                                            object_identifier.object_type,
                                                            object_identifier.instance_number,
                                                            property_identifier,
@@ -1269,7 +1292,7 @@ refine flow BACNET_Flow += {
     ##      - property_identifier           ->  Property Identifier
     ##      - property_array_index          ->  Property Array Index
     ## ------------------------------------------------------------------------------------------------
-    function process_remove_list_element(tags: BACnet_Tag[]): bool
+    function process_remove_list_element(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_remove_list_element )
             {
@@ -1283,6 +1306,7 @@ refine flow BACNET_Flow += {
 
                 zeek::BifEvent::enqueue_bacnet_remove_list_element(connection()->zeek_analyzer(),
                                                               connection()->zeek_analyzer()->Conn(),
+                                                              is_orig,
                                                               object_identifier.object_type,
                                                               object_identifier.instance_number,
                                                               property_identifier,
@@ -1302,12 +1326,13 @@ refine flow BACNET_Flow += {
     ##          + List of values used to initialize the values of specified property of newly created
     ##            object
     ## ------------------------------------------------------------------------------------------------
-    function process_create_object(tags: BACnet_Tag[]): bool
+    function process_create_object(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_create_object )
             {
                 zeek::BifEvent::enqueue_bacnet_create_object(connection()->zeek_analyzer(),
-                                                        connection()->zeek_analyzer()->Conn());
+                                                             connection()->zeek_analyzer()->Conn(),
+                                                             is_orig);
             }
             return true;
         %}
@@ -1322,13 +1347,14 @@ refine flow BACNET_Flow += {
     ##      - object_type                   ->  Object Type from Object Identifier
     ##      - object_instance_number        ->  Instance Number from Object Identifier
     ## ------------------------------------------------------------------------------------------------
-    function process_delete_object(tags: BACnet_Tag[]): bool
+    function process_delete_object(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_delete_object )
             {
                 BACnetObjectIdentifier object_identifier = {${tags[0].tag_data}};
                 zeek::BifEvent::enqueue_bacnet_delete_object(connection()->zeek_analyzer(),
                                                         connection()->zeek_analyzer()->Conn(),
+                                                        is_orig,
                                                         object_identifier.object_type,
                                                         object_identifier.instance_number);
             }
@@ -1352,7 +1378,7 @@ refine flow BACNET_Flow += {
     ##      - property_identifier           ->  Property Identifier
     ##      - property_array_index          ->  Property Array Index
     ## ------------------------------------------------------------------------------------------------
-    function process_read_property(tags: BACnet_Tag[]): bool
+    function process_read_property(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_read_property )
             {
@@ -1365,6 +1391,7 @@ refine flow BACNET_Flow += {
 
                 zeek::BifEvent::enqueue_bacnet_read_property(connection()->zeek_analyzer(),
                                                         connection()->zeek_analyzer()->Conn(),
+                                                        is_orig,
                                                         zeek::make_intrusive<zeek::StringVal>("read-property-request"),
                                                         object_identifier.object_type,
                                                         object_identifier.instance_number,
@@ -1384,7 +1411,7 @@ refine flow BACNET_Flow += {
     ##              - Object Identifier:            BACnetObjectIdentifier          -> Mandatory
     ##              - List of Property References:  List of BACnetPropertyReference -> Mandatory
     ## ------------------------------------------------------------------------------------------------
-    function process_read_property_multiple(tags: BACnet_Tag[]): bool
+    function process_read_property_multiple(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_read_property )
             {
@@ -1400,6 +1427,7 @@ refine flow BACNET_Flow += {
                         }else{
                             zeek::BifEvent::enqueue_bacnet_read_property(connection()->zeek_analyzer(),
                                                                 connection()->zeek_analyzer()->Conn(),
+                                                                is_orig,
                                                                 zeek::make_intrusive<zeek::StringVal>("read-property-multiple-request"),
                                                                 object_identifier.object_type,
                                                                 object_identifier.instance_number,
@@ -1437,7 +1465,7 @@ refine flow BACNET_Flow += {
     ##      - priority                      ->  Priority
     ##      - property_value                ->  Property Value
     ## ------------------------------------------------------------------------------------------------
-    function process_write_property(tags: BACnet_Tag[]): bool
+    function process_write_property(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_write_property )
             {
@@ -1468,6 +1496,7 @@ refine flow BACNET_Flow += {
 
                 zeek::BifEvent::enqueue_bacnet_write_property(connection()->zeek_analyzer(),
                                                          connection()->zeek_analyzer()->Conn(),
+                                                         is_orig,
                                                          object_identifier.object_type,
                                                          object_identifier.instance_number,
                                                          property_identifier,
@@ -1492,12 +1521,13 @@ refine flow BACNET_Flow += {
     ##                  + Property Value:           stinrg                      -> Mandatory
     ##                  + Priority:                 uint8                       -> Optional
     ## ------------------------------------------------------------------------------------------------
-    function process_write_property_multiple(tags: BACnet_Tag[]): bool
+    function process_write_property_multiple(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_write_property_multiple )
             {
                 zeek::BifEvent::enqueue_bacnet_write_property_multiple(connection()->zeek_analyzer(),
-                                                                  connection()->zeek_analyzer()->Conn());
+                                                                       connection()->zeek_analyzer()->Conn(),
+                                                                       is_orig);
             }
             return true;
         %}
@@ -1519,7 +1549,7 @@ refine flow BACNET_Flow += {
     ##      - enable_disable    ->  Enable/Disable
     ##      - password          ->  Password String
     ## ------------------------------------------------------------------------------------------------
-    function process_device_communication_control(tags: BACnet_Tag[]): bool
+    function process_device_communication_control(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_device_communication_control )
             {
@@ -1545,6 +1575,7 @@ refine flow BACNET_Flow += {
 
                 zeek::BifEvent::enqueue_bacnet_device_communication_control(connection()->zeek_analyzer(),
                                                                        connection()->zeek_analyzer()->Conn(),
+                                                                       is_orig,
                                                                        time_duration,
                                                                        enable_disable,
                                                                        zeek::make_intrusive<zeek::StringVal>(password));
@@ -1566,7 +1597,7 @@ refine flow BACNET_Flow += {
     ##      - vendor_id             -> Vendor ID code
     ##      - service_number        -> Service Number
     ## ------------------------------------------------------------------------------------------------
-    function process_confirmed_private_transfer(tags: BACnet_Tag[]): bool
+    function process_confirmed_private_transfer(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_confirmed_private_transfer )
             {
@@ -1574,6 +1605,7 @@ refine flow BACNET_Flow += {
                 uint32 service_number = get_unsigned(${tags[1].tag_data});
                 zeek::BifEvent::enqueue_bacnet_confirmed_private_transfer(connection()->zeek_analyzer(),
                                                                      connection()->zeek_analyzer()->Conn(),
+                                                                     is_orig,
                                                                      vendor_id,
                                                                      service_number);
             }
@@ -1598,7 +1630,7 @@ refine flow BACNET_Flow += {
     ##      - message_priority  -> Message Priority
     ##      - message           -> Message
     ## ------------------------------------------------------------------------------------------------
-    function process_confirmed_text_message(tags: BACnet_Tag[]): bool
+    function process_confirmed_text_message(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_confirmed_text_message )
             {
@@ -1614,6 +1646,7 @@ refine flow BACNET_Flow += {
 
                 zeek::BifEvent::enqueue_bacnet_confirmed_text_message(connection()->zeek_analyzer(),
                                                                  connection()->zeek_analyzer()->Conn(),
+                                                                 is_orig,
                                                                  object_identifier.object_type,
                                                                  object_identifier.instance_number,
                                                                  message_priority,
@@ -1635,7 +1668,7 @@ refine flow BACNET_Flow += {
     ##      - reinitialized_state   -> Reinitialized State of Device
     ##      - password              -> Password String
     ## ------------------------------------------------------------------------------------------------
-    function process_reinitialize_device(tags: BACnet_Tag[]): bool
+    function process_reinitialize_device(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_reinitialize_device )
             {
@@ -1647,6 +1680,7 @@ refine flow BACNET_Flow += {
 
                 zeek::BifEvent::enqueue_bacnet_reinitialize_device(connection()->zeek_analyzer(),
                                                               connection()->zeek_analyzer()->Conn(),
+                                                              is_orig,
                                                               reinitialized_state,
                                                               zeek::make_intrusive<zeek::StringVal>(password));
             }
@@ -1665,7 +1699,7 @@ refine flow BACNET_Flow += {
     ##      - vt_class      -> VT-Class
     ##      - local_vt_id   -> Local VT Session Identifier
     ## ------------------------------------------------------------------------------------------------
-    function process_vt_open(tags: BACnet_Tag[]): bool
+    function process_vt_open(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_vt_open )
             {
@@ -1674,6 +1708,7 @@ refine flow BACNET_Flow += {
 
                 zeek::BifEvent::enqueue_bacnet_vt_open(connection()->zeek_analyzer(),
                                                   connection()->zeek_analyzer()->Conn(),
+                                                  is_orig,
                                                   vt_class,
                                                   local_vt_id);
             }
@@ -1689,13 +1724,14 @@ refine flow BACNET_Flow += {
     ##  VT-Close Event Generation:
     ##      - remote_vt_id  -> Remote VT Session Identifier
     ## ------------------------------------------------------------------------------------------------
-    function process_vt_close(tags: BACnet_Tag[]): bool
+    function process_vt_close(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_vt_close )
             {
                 uint8 remote_vt_id = ${tags[0].tag_data[0]};
                 zeek::BifEvent::enqueue_bacnet_vt_close(connection()->zeek_analyzer(),
                                                    connection()->zeek_analyzer()->Conn(),
+                                                   is_orig,
                                                    remote_vt_id);
             }
             return true;
@@ -1716,7 +1752,7 @@ refine flow BACNET_Flow += {
     ##      - vt_data       -> VT-new Data
     ##      - vt_flag       -> VT-data Flag
     ## ------------------------------------------------------------------------------------------------
-    function process_vt_data(tags: BACnet_Tag[]): bool
+    function process_vt_data(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_vt_data )
             {
@@ -1726,6 +1762,7 @@ refine flow BACNET_Flow += {
 
                 zeek::BifEvent::enqueue_bacnet_vt_data(connection()->zeek_analyzer(),
                                                   connection()->zeek_analyzer()->Conn(),
+                                                  is_orig,
                                                   vt_session_id,
                                                   zeek::make_intrusive<zeek::StringVal>(vt_data),
                                                   vt_flag);
@@ -1750,7 +1787,7 @@ refine flow BACNET_Flow += {
     ##      - property_identifier           ->  Property Identifier
     ##      - property_array_index          ->  Property Array Index
     ## ------------------------------------------------------------------------------------------------
-    function process_read_range(tags: BACnet_Tag[]): bool
+    function process_read_range(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_read_range )
             {
@@ -1763,6 +1800,7 @@ refine flow BACNET_Flow += {
 
                 zeek::BifEvent::enqueue_bacnet_read_range(connection()->zeek_analyzer(),
                                                      connection()->zeek_analyzer()->Conn(),
+                                                     is_orig,
                                                      object_identifier.object_type,
                                                      object_identifier.instance_number,
                                                      property_identifier,
@@ -1791,7 +1829,7 @@ refine flow BACNET_Flow += {
     ##      - object_type               -> Object Type from Object Identifier
     ##      - object_instance_number    -> Instance Number from Object Identifier
     ## ------------------------------------------------------------------------------------------------
-    function process_life_safety_operation(tags: BACnet_Tag[]): bool
+    function process_life_safety_operation(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_life_safety_operation )
             {
@@ -1806,6 +1844,7 @@ refine flow BACNET_Flow += {
 
                 zeek::BifEvent::enqueue_bacnet_life_safety_operation(connection()->zeek_analyzer(),
                                                                 connection()->zeek_analyzer()->Conn(),
+                                                                is_orig,
                                                                 requesting_id,
                                                                 zeek::make_intrusive<zeek::StringVal>(requesting_source),
                                                                 request,
@@ -1840,7 +1879,7 @@ refine flow BACNET_Flow += {
     ##      - monitored_property                -> Monitored Property Identifier
     ##      - cov_increment                     -> COV Increment
     ## ------------------------------------------------------------------------------------------------
-    function process_subscribe_cov_property(tags: BACnet_Tag[]): bool
+    function process_subscribe_cov_property(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_subscribe_cov_property )
             {
@@ -1869,6 +1908,7 @@ refine flow BACNET_Flow += {
 
                 zeek::BifEvent::enqueue_bacnet_subscribe_cov_property(connection()->zeek_analyzer(),
                                                                  connection()->zeek_analyzer()->Conn(),
+                                                                 is_orig,
                                                                  subscriber_process_id,
                                                                  monitored_object_identifer.object_type,
                                                                  monitored_object_identifer.instance_number,
@@ -1890,7 +1930,7 @@ refine flow BACNET_Flow += {
     ##      - last_object_type      -> Object Type from Last Received Object Identifier
     ##      - last_instance_number  -> Instance Number from Last Received Object Identifier
     ## ------------------------------------------------------------------------------------------------
-    function process_get_event_information(tags: BACnet_Tag[]): bool
+    function process_get_event_information(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_get_event_information )
             {
@@ -1900,6 +1940,7 @@ refine flow BACNET_Flow += {
 
                 zeek::BifEvent::enqueue_bacnet_get_event_information(connection()->zeek_analyzer(),
                                                                 connection()->zeek_analyzer()->Conn(),
+                                                                is_orig,
                                                                 last_received.object_type,
                                                                 last_received.instance_number);
             }
@@ -1926,12 +1967,13 @@ refine flow BACNET_Flow += {
     ## Get-Alarm-Summary Event Generation:
     ##      - N/A - Deprecated
     ## ------------------------------------------------------------------------------------------------
-    function process_get_alarm_summary_ack(tags: BACnet_Tag[]): bool
+    function process_get_alarm_summary_ack(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_get_alarm_summary_ack )
             {
                 zeek::BifEvent::enqueue_bacnet_get_alarm_summary_ack(connection()->zeek_analyzer(),
-                                                                connection()->zeek_analyzer()->Conn());
+                                                                     connection()->zeek_analyzer()->Conn(),
+                                                                     is_orig);
             }
             return true;
         %}
@@ -1946,12 +1988,13 @@ refine flow BACNET_Flow += {
     ## Get-Enrollment-Summary Event Generation:
     ##      - N/A - Deprecated
     ## ------------------------------------------------------------------------------------------------
-    function process_get_enrollment_summary_ack(tags: BACnet_Tag[]): bool
+    function process_get_enrollment_summary_ack(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_get_enrollment_summary_ack )
             {
                 zeek::BifEvent::enqueue_bacnet_get_enrollment_summary_ack(connection()->zeek_analyzer(),
-                                                                     connection()->zeek_analyzer()->Conn());
+                                                                          connection()->zeek_analyzer()->Conn(),
+                                                                          is_orig);
             }
             return true;
         %}
@@ -1979,7 +2022,7 @@ refine flow BACNET_Flow += {
     ##      - requested_count       -> Record Count
     ##      - data_to_return        -> File Data/Record Data
     ## ------------------------------------------------------------------------------------------------
-    function process_atomic_read_file_ack(tags: BACnet_Tag[]): bool
+    function process_atomic_read_file_ack(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_atomic_read_file_ack )
             {
@@ -2002,6 +2045,7 @@ refine flow BACNET_Flow += {
 
                 zeek::BifEvent::enqueue_bacnet_atomic_read_file_ack(connection()->zeek_analyzer(),
                                                                connection()->zeek_analyzer()->Conn(),
+                                                               is_orig,
                                                                end_of_file,
                                                                zeek::make_intrusive<zeek::StringVal>(access_type),
                                                                file_start,
@@ -2023,7 +2067,7 @@ refine flow BACNET_Flow += {
     ##      - access_type   -> Stream | Record
     ##      - file_start    -> File Start
     ## ------------------------------------------------------------------------------------------------
-    function process_atomic_write_file_ack(tags: BACnet_Tag[]): bool
+    function process_atomic_write_file_ack(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_atomic_write_file_ack )
             {
@@ -2037,6 +2081,7 @@ refine flow BACNET_Flow += {
 
                 zeek::BifEvent::enqueue_bacnet_atomic_write_file_ack(connection()->zeek_analyzer(),
                                                                 connection()->zeek_analyzer()->Conn(),
+                                                                is_orig,
                                                                 zeek::make_intrusive<zeek::StringVal>(access_type),
                                                                 file_start);
             }
@@ -2054,13 +2099,14 @@ refine flow BACNET_Flow += {
     ##      - object_type        -> Object Type from Object Identifier
     ##      - instance_number    -> Instance Number from Object Identifier
     ## ------------------------------------------------------------------------------------------------
-    function process_create_object_ack(tags: BACnet_Tag[]): bool
+    function process_create_object_ack(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_create_object_ack )
             {
                 BACnetObjectIdentifier result_object_identifier = {${tags[0].tag_data}};
                 zeek::BifEvent::enqueue_bacnet_create_object_ack(connection()->zeek_analyzer(),
                                                             connection()->zeek_analyzer()->Conn(),
+                                                            is_orig,
                                                             result_object_identifier.object_type,
                                                             result_object_identifier.instance_number);
             }
@@ -2087,7 +2133,7 @@ refine flow BACNET_Flow += {
     ##      - property_array_index          ->  Property Array Index
     ##      - property_value                ->  Value of Property
     ## ------------------------------------------------------------------------------------------------
-    function process_read_property_ack(tags: BACnet_Tag[]): bool
+    function process_read_property_ack(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_read_property_ack )
             {
@@ -2107,6 +2153,7 @@ refine flow BACNET_Flow += {
 
                 zeek::BifEvent::enqueue_bacnet_read_property_ack(connection()->zeek_analyzer(),
                                                            connection()->zeek_analyzer()->Conn(),
+                                                           is_orig,
                                                            zeek::make_intrusive<zeek::StringVal>("read-property-ack"),
                                                            object_identifier.object_type,
                                                            object_identifier.instance_number,
@@ -2124,7 +2171,7 @@ refine flow BACNET_Flow += {
     ##  Read-Property-Multiple-ACK Structure:
     ##      - List of Read Access Results
     ## ------------------------------------------------------------------------------------------------
-    function process_read_property_multiple_ack(tags: BACnet_Tag[]): bool
+    function process_read_property_multiple_ack(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_read_property_ack )
             {
@@ -2154,6 +2201,7 @@ refine flow BACNET_Flow += {
                                 // If we get to this close tag and a property hasn't been written yet, write to log with null
                                 zeek::BifEvent::enqueue_bacnet_read_property_ack(connection()->zeek_analyzer(),
                                                                                  connection()->zeek_analyzer()->Conn(),
+                                                                                 is_orig,
                                                                                  zeek::make_intrusive<zeek::StringVal>("read-property-multiple-ack"),
                                                                                  object_identifier.object_type,
                                                                                  object_identifier.instance_number,
@@ -2172,6 +2220,7 @@ refine flow BACNET_Flow += {
                             property_value = "PropertyError";
                             zeek::BifEvent::enqueue_bacnet_read_property_ack(connection()->zeek_analyzer(),
                                                                              connection()->zeek_analyzer()->Conn(),
+                                                                             is_orig,
                                                                              zeek::make_intrusive<zeek::StringVal>("read-property-multiple-ack"),
                                                                              object_identifier.object_type,
                                                                              object_identifier.instance_number,
@@ -2183,6 +2232,7 @@ refine flow BACNET_Flow += {
                             property_exists = 1;
                             zeek::BifEvent::enqueue_bacnet_read_property_ack(connection()->zeek_analyzer(),
                                                                              connection()->zeek_analyzer()->Conn(),
+                                                                             is_orig,
                                                                              zeek::make_intrusive<zeek::StringVal>("read-property-multiple-ack"),
                                                                              object_identifier.object_type,
                                                                              object_identifier.instance_number,
@@ -2211,7 +2261,7 @@ refine flow BACNET_Flow += {
     ##      - vendor_id         -> Vendor ID
     ##      - service_number    -> Service Number
     ## ------------------------------------------------------------------------------------------------
-    function process_confirmed_private_transfer_ack(tags: BACnet_Tag[]): bool
+    function process_confirmed_private_transfer_ack(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_confirmed_private_transfer_ack )
             {
@@ -2220,6 +2270,7 @@ refine flow BACNET_Flow += {
 
                 zeek::BifEvent::enqueue_bacnet_confirmed_private_transfer_ack(connection()->zeek_analyzer(),
                                                                          connection()->zeek_analyzer()->Conn(),
+                                                                         is_orig,
                                                                          vendor_id,
                                                                          service_number);
             }
@@ -2236,13 +2287,14 @@ refine flow BACNET_Flow += {
     ##  VT-Open Event Generation:
     ##      - remote_session_identifier -> Remote VT Session Identifier
     ## ------------------------------------------------------------------------------------------------
-    function process_vt_open_ack(tags: BACnet_Tag[]): bool
+    function process_vt_open_ack(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_vt_open_ack )
             {
                 uint8 remote_session_identifier = ${tags[0].tag_data[0]};
                 zeek::BifEvent::enqueue_bacnet_vt_open_ack(connection()->zeek_analyzer(),
                                                       connection()->zeek_analyzer()->Conn(),
+                                                      is_orig,
                                                       remote_session_identifier);
             }
             return true;
@@ -2261,7 +2313,7 @@ refine flow BACNET_Flow += {
     ##      - data_accepted     -> All New Data Accepted
     ##      - accepted_count    -> Accepted Octet Count
     ## ------------------------------------------------------------------------------------------------
-    function process_vt_data_ack(tags: BACnet_Tag[]): bool
+    function process_vt_data_ack(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_vt_data_ack )
             {
@@ -2272,6 +2324,7 @@ refine flow BACNET_Flow += {
                 }
                 zeek::BifEvent::enqueue_bacnet_vt_data_ack(connection()->zeek_analyzer(),
                                                       connection()->zeek_analyzer()->Conn(),
+                                                      is_orig,
                                                       data_accepted,
                                                       accepted_count);
             }
@@ -2305,7 +2358,7 @@ refine flow BACNET_Flow += {
     ##  TODO: Add logic to send read-range items to bacnet_property.log file. Items utilize context-
     ##        specific flags
     ## ------------------------------------------------------------------------------------------------
-    function process_read_range_ack(tags: BACnet_Tag[]): bool
+    function process_read_range_ack(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_read_range_ack )
             {
@@ -2324,6 +2377,7 @@ refine flow BACNET_Flow += {
 
                 zeek::BifEvent::enqueue_bacnet_read_range_ack(connection()->zeek_analyzer(),
                                                          connection()->zeek_analyzer()->Conn(),
+                                                         is_orig,
                                                          object_identifier.object_type,
                                                          object_identifier.instance_number,
                                                          property_identifier,
@@ -2339,12 +2393,13 @@ refine flow BACNET_Flow += {
     ##      The Get-Event-Information-ACK indicates the service has succeeded and responds with a list
     ##      of events
     ## ------------------------------------------------------------------------------------------------
-    function process_get_event_information_ack(tags: BACnet_Tag[]): bool
+    function process_get_event_information_ack(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_get_event_information_ack )
             {
                 zeek::BifEvent::enqueue_bacnet_get_event_information_ack(connection()->zeek_analyzer(),
-                                                                    connection()->zeek_analyzer()->Conn());
+                                                                         connection()->zeek_analyzer()->Conn(),
+                                                                         is_orig);
             }
             return true;
         %}

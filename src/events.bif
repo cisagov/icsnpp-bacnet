@@ -16,6 +16,7 @@
 ##      Event is generated for all BACnet packets and contains relevant BACnet header data
 ## Event Data:
 ##      - c:                    connection  -> Zeek Connection Struct
+##      - is_orig:              bool        -> the message came from the originator/client or the responder/server
 ##      - bvlc_function:        count       -> BVLC Function (see bvlc_functions in consts.pac)
 ##      - pdu_type:             count       -> APDU Type (see apdu_types in consts.pac)
 ##      - pdu_service:          count       -> APDU Type (see apdu_types in consts.pac)
@@ -26,6 +27,7 @@
 ##      Writes to log file bacnet.log
 ## ------------------------------------------------------------------------------------------------
 event bacnet_header%(c: connection,
+                     is_orig: bool,
                      bvlc_function: count,
                      pdu_type: count,
                      pdu_service: count,
@@ -37,6 +39,7 @@ event bacnet_header%(c: connection,
 ##      Event is generated for all BACnet I-Am packets
 ## Event Data:
 ##      - c:                    connection  -> Zeek Connection Struct
+##      - is_orig:              bool        -> the message came from the originator/client or the responder/server
 ##      - object_type:          count       -> Object Type from Device Identifier
 ##      - instance_number:      count       -> Instance Number from Device Identifier
 ##      - max_apdu:             count       -> Max APDU Length Accepted
@@ -46,6 +49,7 @@ event bacnet_header%(c: connection,
 ##      Writes to log file bacnet_discovery.log
 ## ------------------------------------------------------------------------------------------------
 event bacnet_i_am%(c: connection,
+                   is_orig: bool,
                    object_type: count,
                    instance_number: count,
                    max_apdu: count,
@@ -57,12 +61,14 @@ event bacnet_i_am%(c: connection,
 ##      Event is generated for all BACnet Who-Is packets
 ## Event Data:
 ##      - c:                    connection  -> Zeek Connection Struct
+##      - is_orig:              bool        -> the message came from the originator/client or the responder/server
 ##      - low_limit:            count       -> Device Instance Range Low Limit
 ##      - high_limit:           count       -> Device Instance Range High Limit
 ## Default Output:
 ##      Writes to log file bacnet_discovery.log
 ## ------------------------------------------------------------------------------------------------
 event bacnet_who_is%(c: connection,
+                     is_orig: bool,
                      low_limit: count,
                      high_limit: count%);
 
@@ -71,6 +77,7 @@ event bacnet_who_is%(c: connection,
 ##      Event is generated for all BACnet I-Have packets
 ## Event Data:
 ##      - c:                    connection  -> Zeek Connection Struct
+##      - is_orig:              bool        -> the message came from the originator/client or the responder/server
 ##      - device_object_type:   count       -> Object Type from Device Identifier
 ##      - device_instance_num:  count       -> Instance Number from Device Identifier
 ##      - object_object_type:   count       -> Object Type from Object Identifier
@@ -80,6 +87,7 @@ event bacnet_who_is%(c: connection,
 ##      Writes to log file bacnet_discovery.log
 ## ------------------------------------------------------------------------------------------------
 event bacnet_i_have%(c: connection,
+                     is_orig: bool,
                      device_object_type: count,
                      device_instance_num: count,
                      object_object_type: count,
@@ -91,6 +99,7 @@ event bacnet_i_have%(c: connection,
 ##      Event is generated for all BACnet Who-Has packets
 ## Event Data:
 ##      - c:                    connection  -> Zeek Connection Struct
+##      - is_orig:              bool        -> the message came from the originator/client or the responder/server
 ##      - low_limit:            count       -> Device Instance Range Low Limit
 ##      - high_limit:           count       -> Device Instance Range High Limit
 ##      - object_type:          count       -> Object Type from Object Identifier
@@ -100,6 +109,7 @@ event bacnet_i_have%(c: connection,
 ##      Writes to log file bacnet_discovery.log
 ## ------------------------------------------------------------------------------------------------
 event bacnet_who_has%(c: connection,
+                      is_orig: bool,
                       low_limit: count,
                       high_limit: count,
                       object_type: count,
@@ -111,6 +121,7 @@ event bacnet_who_has%(c: connection,
 ##      Event is generated for all BACnet Read-Property packets
 ## Event Data:
 ##      - c:                    connection  -> Zeek Connection Struct
+##      - is_orig:              bool        -> the message came from the originator/client or the responder/server
 ##      - object_type:          count       -> Object Type from Object Identifier
 ##      - instance_number:      count       -> Instance Number from Object Identifier
 ##      - property_identifier:  count       -> Property Identifier (see property_identifiers in consts.zeek)
@@ -119,6 +130,7 @@ event bacnet_who_has%(c: connection,
 ##      Writes to log file bacnet_property.log
 ## ------------------------------------------------------------------------------------------------
 event bacnet_read_property%(c: connection,
+                            is_orig: bool,
                             pdu_service: string,
                             object_type: count,
                             instance_number: count,
@@ -130,6 +142,7 @@ event bacnet_read_property%(c: connection,
 ##      Event is generated for all BACnet Read-Property_ACK packets
 ## Event Data:
 ##      - c:                    connection  -> Zeek Connection Struct
+##      - is_orig:              bool        -> the message came from the originator/client or the responder/server
 ##      - object_type:          count       -> Object Type from Object Identifier
 ##      - instance_number:      count       -> Instance Number from Object Identifier
 ##      - property_identifier:  count       -> Property Identifier (see property_identifiers in consts.zeek)
@@ -139,6 +152,7 @@ event bacnet_read_property%(c: connection,
 ##      Writes to log file bacnet_property.log
 ## ------------------------------------------------------------------------------------------------
 event bacnet_read_property_ack%(c: connection,
+                                is_orig: bool,
                                 pdu_service: string,
                                 object_type: count,
                                 instance_number: count,
@@ -151,6 +165,7 @@ event bacnet_read_property_ack%(c: connection,
 ##      Event is generated for all BACnet Write_Property packets
 ## Event Data:
 ##      - c:                    connection  -> Zeek Connection Struct
+##      - is_orig:              bool        -> the message came from the originator/client or the responder/server
 ##      - object_type:          count       -> Object Type from Object Identifier
 ##      - instance_number:      count       -> Instance Number from Object Identifier
 ##      - property_identifier:  count       -> Property Identifier (see property_identifiers in consts.zeek)
@@ -161,6 +176,7 @@ event bacnet_read_property_ack%(c: connection,
 ##      Writes to log file bacnet_property.log
 ## ------------------------------------------------------------------------------------------------
 event bacnet_write_property%(c: connection,
+                             is_orig: bool,
                              object_type: count,
                              instance_number: count,
                              property_identifier: count,
@@ -173,6 +189,7 @@ event bacnet_write_property%(c: connection,
 ##      Event is generated for all BACnet Read Property Errors
 ## Event Data:
 ##      - c:                    connection  -> Zeek Connection Struct
+##      - is_orig:              bool        -> the message came from the originator/client or the responder/server
 ##      - pdu_type:             count       -> APDU Type (see apdu_types in consts.pac)
 ##      - pdu_service:          count       -> APDU Type (see apdu_types in consts.pac)
 ##      - result_code:          count       -> See (abort_reasons, reject_reasons, and error_codes)
@@ -180,6 +197,7 @@ event bacnet_write_property%(c: connection,
 ##      Writes to log file bacnet_property.log
 ## ------------------------------------------------------------------------------------------------
 event bacnet_property_error%(c: connection,
+                             is_orig: bool,
                              pdu_type: count,
                              pdu_service: count,
                              result_code: count%);
@@ -202,6 +220,7 @@ event bacnet_property_error%(c: connection,
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
 event bacnet_unconfirmed_cov_notification%(c: connection,
+                                           is_orig: bool,
                                            subscriber_id: count,
                                            initiating_object_type: count,
                                            initiating_instance_number: count,
@@ -218,6 +237,7 @@ event bacnet_unconfirmed_cov_notification%(c: connection,
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
 event bacnet_unconfirmed_event_notification%(c: connection,
+                                             is_orig: bool,
                                              process_identifier: count,
                                              initiating_object_type: count,
                                              initiating_instance_number: count,
@@ -241,6 +261,7 @@ event bacnet_unconfirmed_event_notification%(c: connection,
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
 event bacnet_unconfirmed_private_transfer%(c: connection,
+                                           is_orig: bool,
                                            vendor_id: count,
                                            service_number: count%);
 
@@ -253,6 +274,7 @@ event bacnet_unconfirmed_private_transfer%(c: connection,
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
 event bacnet_unconfirmed_text_message%(c: connection,
+                                       is_orig: bool,
                                        object_type: count,
                                        instance_number: count,
                                        message_priority: count,
@@ -267,6 +289,7 @@ event bacnet_unconfirmed_text_message%(c: connection,
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
 event bacnet_time_synchronization%(c: connection,
+                                   is_orig: bool,
                                    year: count,
                                    month: count,
                                    day: count,
@@ -285,6 +308,7 @@ event bacnet_time_synchronization%(c: connection,
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
 event bacnet_utc_time_synchronization%(c: connection,
+                                       is_orig: bool,
                                        year: count,
                                        month: count,
                                        day: count,
@@ -303,6 +327,7 @@ event bacnet_utc_time_synchronization%(c: connection,
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
 event bacnet_write_group%(c: connection,
+                          is_orig: bool,
                           group_number: count,
                           write_priority: count%);
 
@@ -315,6 +340,7 @@ event bacnet_write_group%(c: connection,
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
 event bacnet_unconfirmed_cov_notification_multiple%(c: connection,
+                                                    is_orig: bool,
                                                     subscriber_id: count,
                                                     initiating_object_type: count,
                                                     initiating_instance_number: count,
@@ -329,6 +355,7 @@ event bacnet_unconfirmed_cov_notification_multiple%(c: connection,
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
 event bacnet_acknowledge_alarm%(c: connection,
+                                is_orig: bool,
                                 acknowledge_process_id: count,
                                 event_object_type: count,
                                 event_instance_number: count,
@@ -343,6 +370,7 @@ event bacnet_acknowledge_alarm%(c: connection,
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
 event bacnet_confirmed_cov_notification%(c: connection,
+                                         is_orig: bool,
                                          subscriber_id: count,
                                          initiating_object_type: count,
                                          initiating_instance_number: count,
@@ -359,6 +387,7 @@ event bacnet_confirmed_cov_notification%(c: connection,
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
 event bacnet_confirmed_event_notification%(c: connection,
+                                           is_orig: bool,
                                            process_identifier: count,
                                            initiating_object_type: count,
                                            initiating_instance_number: count,
@@ -381,7 +410,8 @@ event bacnet_confirmed_event_notification%(c: connection,
 ## Default Output:
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
-event bacnet_get_alarm_summary%(c: connection%);
+event bacnet_get_alarm_summary%(c: connection,
+                                is_orig: bool%);
 
 ## ---------------------------------bacnet-get-enrollment-summary----------------------------------
 ## Event Description:
@@ -391,7 +421,8 @@ event bacnet_get_alarm_summary%(c: connection%);
 ## Default Output:
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
-event bacnet_get_enrollment_summary%(c: connection%);
+event bacnet_get_enrollment_summary%(c: connection,
+                                     is_orig: bool%);
 
 ## --------------------------------------bacnet-subscribe-cov--------------------------------------
 ## Event Description:
@@ -402,6 +433,7 @@ event bacnet_get_enrollment_summary%(c: connection%);
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
 event bacnet_subscribe_cov%(c: connection,
+                            is_orig: bool,
                             subscriber_process_identifier: count,
                             monitored_identifier: count,
                             monitored_instance_number: count,
@@ -417,6 +449,7 @@ event bacnet_subscribe_cov%(c: connection,
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
 event bacnet_atomic_read_file%(c: connection,
+                               is_orig: bool,
                                file_object_type: count,
                                file_instance_number: count,
                                access_type: string,
@@ -432,6 +465,7 @@ event bacnet_atomic_read_file%(c: connection,
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
 event bacnet_atomic_write_file%(c: connection,
+                                is_orig: bool,
                                 file_object_type: count,
                                 file_instance_number: count,
                                 access_type: string,
@@ -448,6 +482,7 @@ event bacnet_atomic_write_file%(c: connection,
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
 event bacnet_add_list_element%(c: connection,
+                               is_orig: bool,
                                object_type: count,
                                instance_number: count,
                                property_identifier: count,
@@ -462,6 +497,7 @@ event bacnet_add_list_element%(c: connection,
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
 event bacnet_remove_list_element%(c: connection,
+                                  is_orig: bool,
                                   object_type: count,
                                   instance_number: count,
                                   property_identifier: count,
@@ -475,7 +511,8 @@ event bacnet_remove_list_element%(c: connection,
 ## Default Output:
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
-event bacnet_create_object%(c: connection%);
+event bacnet_create_object%(c: connection,
+                            is_orig: bool%);
 
 ## --------------------------------------bacnet-delete-object--------------------------------------
 ## Event Description:
@@ -486,6 +523,7 @@ event bacnet_create_object%(c: connection%);
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
 event bacnet_delete_object%(c: connection,
+                            is_orig: bool,
                             object_type: count,
                             instance_number: count%);
 
@@ -497,7 +535,8 @@ event bacnet_delete_object%(c: connection,
 ## Default Output:
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
-event bacnet_read_property_multiple%(c: connection%);
+event bacnet_read_property_multiple%(c: connection,
+                                     is_orig: bool%);
 
 ## ---------------------------------bacnet-write-property-multiple---------------------------------
 ## Event Description:
@@ -507,7 +546,8 @@ event bacnet_read_property_multiple%(c: connection%);
 ## Default Output:
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
-event bacnet_write_property_multiple%(c: connection%);
+event bacnet_write_property_multiple%(c: connection,
+                                      is_orig: bool%);
 
 ## ------------------------------bacnet-device-communication-control-------------------------------
 ## Event Description:
@@ -518,6 +558,7 @@ event bacnet_write_property_multiple%(c: connection%);
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
 event bacnet_device_communication_control%(c: connection,
+                                           is_orig: bool,
                                            time_duration: count,
                                            enable_disable: count,
                                            password: string%);
@@ -531,6 +572,7 @@ event bacnet_device_communication_control%(c: connection,
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
 event bacnet_confirmed_private_transfer%(c: connection,
+                                         is_orig: bool,
                                          vendor_id: count,
                                          service_number: count%);
 
@@ -543,6 +585,7 @@ event bacnet_confirmed_private_transfer%(c: connection,
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
 event bacnet_confirmed_text_message%(c: connection,
+                                     is_orig: bool,
                                      object_type: count,
                                      instance_number: count,
                                      message_priority: count,
@@ -557,6 +600,7 @@ event bacnet_confirmed_text_message%(c: connection,
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
 event bacnet_reinitialize_device%(c: connection,
+                                  is_orig: bool,
                                   reinitialized_state: count,
                                   password: string%);
 
@@ -569,6 +613,7 @@ event bacnet_reinitialize_device%(c: connection,
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
 event bacnet_vt_open%(c: connection,
+                      is_orig: bool,
                       vt_class :count,
                       local_vt_id: count%);
 
@@ -581,6 +626,7 @@ event bacnet_vt_open%(c: connection,
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
 event bacnet_vt_close%(c: connection,
+                       is_orig: bool,
                        remote_vt_id: count%);
 
 ## -----------------------------------------bacnet-vt-data-----------------------------------------
@@ -592,6 +638,7 @@ event bacnet_vt_close%(c: connection,
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
 event bacnet_vt_data%(c: connection,
+                      is_orig: bool,
                       vt_session_id: count,
                       vt_data: string,
                       vt_flag: count%);
@@ -605,6 +652,7 @@ event bacnet_vt_data%(c: connection,
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
 event bacnet_read_range%(c: connection,
+                         is_orig: bool,
                          object_type: count,
                          instance_number: count,
                          property_identifier: count,
@@ -619,6 +667,7 @@ event bacnet_read_range%(c: connection,
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
 event bacnet_life_safety_operation%(c: connection,
+                                    is_orig: bool,
                                     requesting_id: count,
                                     requesting_source: string,
                                     request: count,
@@ -634,6 +683,7 @@ event bacnet_life_safety_operation%(c: connection,
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
 event bacnet_subscribe_cov_property%(c: connection,
+                                     is_orig: bool,
                                      subscriber_process_id: count,
                                      monitored_identifier_object_type: count,
                                      monitored_identifier_instance_number: count,
@@ -650,6 +700,7 @@ event bacnet_subscribe_cov_property%(c: connection,
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
 event bacnet_get_event_information%(c: connection,
+                                    is_orig: bool,
                                     last_object_type: count,
                                     last_instance_number: count%);
 
@@ -661,7 +712,8 @@ event bacnet_get_event_information%(c: connection,
 ## Default Output:
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
-event bacnet_get_alarm_summary_ack%(c: connection%);
+event bacnet_get_alarm_summary_ack%(c: connection,
+                                    is_orig: bool%);
 
 ## -------------------------------bacnet-get-enrollment-summary-ack--------------------------------
 ## Event Description:
@@ -671,7 +723,8 @@ event bacnet_get_alarm_summary_ack%(c: connection%);
 ## Default Output:
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
-event bacnet_get_enrollment_summary_ack%(c: connection%);
+event bacnet_get_enrollment_summary_ack%(c: connection,
+                                         is_orig: bool%);
 
 ## ----------------------------------bacnet-atomic-read-file-ack-----------------------------------
 ## Event Description:
@@ -682,6 +735,7 @@ event bacnet_get_enrollment_summary_ack%(c: connection%);
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
 event bacnet_atomic_read_file_ack%(c: connection,
+                                   is_orig: bool,
                                    end_of_file: count,
                                    access_type: string,
                                    file_start: count,
@@ -697,6 +751,7 @@ event bacnet_atomic_read_file_ack%(c: connection,
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
 event bacnet_atomic_write_file_ack%(c: connection,
+                                    is_orig: bool,
                                     access_type: string,
                                     file_start: count%);
 
@@ -709,6 +764,7 @@ event bacnet_atomic_write_file_ack%(c: connection,
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
 event bacnet_create_object_ack%(c: connection,
+                                is_orig: bool,
                                 object_type: count,
                                 instance_number: count%);
 
@@ -720,7 +776,8 @@ event bacnet_create_object_ack%(c: connection,
 ## Default Output:
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
-event bacnet_read_property_multiple_ack%(c: connection%);
+event bacnet_read_property_multiple_ack%(c: connection,
+                                         is_orig: bool%);
 
 ## -----------------------------bacnet-confirmed-private-transfer-ack------------------------------
 ## Event Description:
@@ -731,6 +788,7 @@ event bacnet_read_property_multiple_ack%(c: connection%);
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
 event bacnet_confirmed_private_transfer_ack%(c: connection,
+                                             is_orig: bool,
                                              vendor_id: count,
                                              service_number: count%);
 
@@ -743,6 +801,7 @@ event bacnet_confirmed_private_transfer_ack%(c: connection,
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
 event bacnet_vt_open_ack%(c: connection,
+                          is_orig: bool,
                           remote_session_identifier: count%);
 
 ## ---------------------------------------bacnet-vt-data-ack---------------------------------------
@@ -754,6 +813,7 @@ event bacnet_vt_open_ack%(c: connection,
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
 event bacnet_vt_data_ack%(c: connection,
+                          is_orig: bool,
                           data_accepted: count,
                           accepted_count: count%);
 
@@ -766,6 +826,7 @@ event bacnet_vt_data_ack%(c: connection,
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
 event bacnet_read_range_ack%(c: connection,
+                             is_orig: bool,
                              object_type: count,
                              instance_number: count,
                              property_identifier: count,
@@ -781,7 +842,8 @@ event bacnet_read_range_ack%(c: connection,
 ## Default Output:
 ##      No defined log in main.zeek by default
 ## ------------------------------------------------------------------------------------------------
-event bacnet_get_event_information_ack%(c: connection%);
+event bacnet_get_event_information_ack%(c: connection,
+                                        is_orig: bool%);
 
 ###################################################################################################
 #################################  END OF NOT LOGGED BY DEFAULT  ##################################
