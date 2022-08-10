@@ -682,7 +682,7 @@ refine flow BACNET_Flow += {
             if ( ::bacnet_who_is )
             {
                 uint32 low_limit =  UINT32_MAX, high_limit =  UINT32_MAX;
-                if( ${tags}->size() > 0 ){
+                if( ${tags}->size() > 1 ){
                     low_limit = get_unsigned(${tags[0].tag_data});
                     high_limit = get_unsigned(${tags[1].tag_data});
                 }
