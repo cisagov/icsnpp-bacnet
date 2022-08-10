@@ -335,7 +335,7 @@ type FDT_Entry = record {
 ##      Passes BVLC Function to APDU for further processing
 ## ------------------------------------------------------------------------------------------------
 type NPDU_Header(bvlc_function: uint8) = record {
-    protocol_version    : uint8;
+    protocol_version    : uint8 &enforce(protocol_version == 0x01);
     npdu_control        : uint8;
     destination         : case ((npdu_control & 0x20) >> 5) of {
         1       -> destination_exists:  NPDU_Destination;
