@@ -138,6 +138,22 @@ This log captures important variables for Read-Property-Request, Read-Property-A
 | array_index       | count     | Property array index                                      |
 | value             | string    | Value of property                                         |
 
+## Troubleshooting
+
+By default, this BACnet parser will only produce BACnet log files on BACnet traffic to UDP port 47808. If you have BACnet traffic operating on a port other than UDP/47808, you can remove the `#` in the first line of [scripts/icsnpp/bacnet/\_\_load\_\_.zeek](scripts/icsnpp/bacnet/__load__.zeek). However, this may produce false positives as other UDP traffic such as DNS can produce similar packets to some of the simpler/smaller BACnet functions.
+
+Default configuration, only parses BACnet traffic on UDP/47808
+```bash
+# @load-sigs ./dpd.sig
+@load ./main
+```
+
+Modified configuration, parses BACnet traffic on all UDP ports, but may produce false positives
+```bash
+@load-sigs ./dpd.sig
+@load ./main
+```
+
 ## ICSNPP Packages
 
 All ICSNPP Packages:

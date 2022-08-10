@@ -1,2 +1,2 @@
-@load-sigs ./dpd.sig
+# @load-sigs ./dpd.sig
 @load ./main
