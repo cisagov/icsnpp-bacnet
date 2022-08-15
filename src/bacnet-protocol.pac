@@ -39,7 +39,7 @@ type BACNET_PDU(is_orig: bool) = record {
 ## ------------------------------------------------------------------------------------------------
 type BVLC_Header(is_orig: bool) = record {
     bvlc_type         : uint8 &enforce(bvlc_type == 0x81);
-    bvlc_function     : uint8;
+    bvlc_function     : uint8; # No need for &enforce because switch statement below passes processing according to bvlc_function
     length            : uint16;
     body             : case bvlc_function of {
         BVLC_RESULT                         -> bvlc_result:                         BVLC_Result(is_orig);
@@ -409,7 +409,7 @@ type NPDU_Source = record {
 ##      Passes Choice Tag and BVLC Function to APDU for further processing
 ## ------------------------------------------------------------------------------------------------
 type APDU_Header(is_orig: bool, bvlc_function: uint8) = record {
-    choice_tag      : uint8;
+    choice_tag      : uint8; # No need for &enforce because switch statement below passes processing according to choice_tag
     body            : case (choice_tag >> 4) of {
         CONFIRMED_REQUEST   -> confirmed_request:   Confirmed_Request_PDU(is_orig, choice_tag,bvlc_function);
         UNCONFIRMED_REQUEST -> unconfirmed_request: Unconfirmed_Request_PDU(is_orig, choice_tag,bvlc_function);
@@ -489,7 +489,7 @@ type Confirmed_Request_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: uint
         1       -> proposed_window_value:   uint8;
         default -> no_proposed_window:      empty;
     };
-    service_choice          : uint8;
+    service_choice          : uint8 &enforce(service_choice <= 0x1d);
     service_request_tags    : BACnet_Tag[] &until($input == 0);
 } &let {
     deliver: bool = case service_choice of {
@@ -546,7 +546,7 @@ type Confirmed_Request_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: uint
 ##      Passes Unconfirmed Request Tags to corresponding analyzer in bacnet_analyzer.pac
 ## ------------------------------------------------------------------------------------------------
 type Unconfirmed_Request_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: uint8) = record {
-    service_choice              : uint8;
+    service_choice              : uint8 &enforce(service_choice <= 0x0b);
     service_request_tags        : BACnet_Tag[] &until($input == 0);
 } &let {
     deliver: bool = case service_choice of {
@@ -586,7 +586,7 @@ type Unconfirmed_Request_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: ui
 ## ------------------------------------------------------------------------------------------------
 type Simple_ACK_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: uint8) = record {
     invoke_id       : uint8;
-    service_choice  : uint8;
+    service_choice  : uint8 &enforce(service_choice <= 0x1d);
 } &let {
     pdu_type: uint8 = choice_tag >> 4;
     overview: bool = $context.flow.process_bacnet_header(is_orig, bvlc_function, pdu_type, service_choice, invoke_id, 0);
@@ -636,7 +636,7 @@ type Complex_ACK_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: uint8)   =
         1       -> proposed_window_value:   uint8;
         default -> no_proposed_window:      empty;
     };
-    service_choice      : uint8;
+    service_choice      : uint8 &enforce(service_choice <= 0x1d);
     service_ack_tags    : BACnet_Tag[] &until($input == 0);
 } &let {
     deliver: bool = case service_choice of {
@@ -715,7 +715,7 @@ type Segment_ACK_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: uint8) = r
 ## ------------------------------------------------------------------------------------------------
 type Error_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: uint8) = record {
     invoke_id       : uint8;
-    service_choice  : uint8;
+    service_choice  : uint8 &enforce(service_choice <= 0x1d);
     error_class     : BACnet_Tag;
     error_code      : BACnet_Tag;
 } &let {
