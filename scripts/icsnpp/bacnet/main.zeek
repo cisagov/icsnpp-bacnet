@@ -22,6 +22,7 @@ export {
         ts                      : time      &log;   # Timestamp of event
         uid                     : string    &log;   # Zeek unique ID for connection
         id                      : conn_id   &log;   # Zeek connection struct (addresses and ports)
+        is_orig                 : bool      &log;   # the message came from the originator/client or the responder/server
         bvlc_function           : string    &log;   # BVLC function (see bvlc_functions)
         pdu_type                : string    &log;   # APDU type (see apdu_types)
         pdu_service             : string    &log;   # APDU service (see unconfirmed_service_choice and confirmed_service_choice)
@@ -38,6 +39,7 @@ export {
         ts                      : time      &log;   # Timestamp of event
         uid                     : string    &log;   # Zeek unique ID for connection
         id                      : conn_id   &log;   # Zeek connection struct (addresses and ports)
+        is_orig                 : bool      &log;   # the message came from the originator/client or the responder/server
         pdu_service             : string    &log;   # who-is, i-am, who-has, or i-have
         object_type             : string    &log;   # BACnetObjectIdentifier object (see object_types)
         instance_number         : count     &log;   # BACnetObjectIdentifier instance number
@@ -54,6 +56,7 @@ export {
         ts                      : time      &log;   # Timestamp of event
         uid                     : string    &log;   # Zeek unique ID for connection
         id                      : conn_id   &log;   # Zeek connection struct (addresses and ports)
+        is_orig                 : bool      &log;   # the message came from the originator/client or the responder/server
         pdu_service             : string    &log;   # read-property-request/ack, write-property-request
         object_type             : string    &log;   # BACnetObjectIdentifier object (see object_types)
         instance_number         : count     &log;   # BACnetObjectIdentifier instance number
@@ -64,10 +67,6 @@ export {
     global log_bacnet_property: event(rec: BACnet_Property);
 
 }
-
-## Defines BACnet Ports
-const ports = { 47808/udp };
-redef likely_server_ports += { ports };
 
 ###################################################################################################
 #######  Defines Log Streams for bacnet.log, bacnet_discovery.log, and bacnet_property.log  #######
@@ -84,8 +83,6 @@ event zeek_init() &priority=5{
     Log::create_stream(Bacnet::LOG_BACNET_PROPERTY, [$columns=BACnet_Property,
                                                      $ev=log_bacnet_property,
                                                      $path="bacnet_property"]);
-
-    Analyzer::register_for_ports(Analyzer::ANALYZER_BACNET, ports);
 }
 
 ###################################################################################################
@@ -100,6 +97,7 @@ function set_service(c: connection) {
 #####################  Defines logging of bacnet_header event -> bacnet.log  ######################
 ###################################################################################################
 event bacnet_header(c: connection,
+                    is_orig: bool,
                     bvlc_function: count,
                     pdu_type: count,
                     pdu_service: count,
@@ -108,6 +106,7 @@ event bacnet_header(c: connection,
 
     set_service(c);
     local bacnet_log: BACnet_Header;
+    bacnet_log$is_orig = is_orig;
     bacnet_log$ts  = network_time();
     bacnet_log$uid = c$uid;
     bacnet_log$id  = c$id;
@@ -157,11 +156,13 @@ event bacnet_header(c: connection,
 ################  Defines logging of bacnet_who_is event -> bacnet_discovery.log  #################
 ###################################################################################################
 event bacnet_who_is(c: connection,
+                    is_orig: bool,
                     low_limit: count,
                     high_limit: count){
 
     set_service(c);
     local bacnet_discovery: BACnet_Discovery;
+    bacnet_discovery$is_orig = is_orig;
     bacnet_discovery$ts  = network_time();
     bacnet_discovery$uid = c$uid;
     bacnet_discovery$id  = c$id;
@@ -180,6 +181,7 @@ event bacnet_who_is(c: connection,
 #################  Defines logging of bacnet_i_am event -> bacnet_discovery.log  ##################
 ###################################################################################################
 event bacnet_i_am(c: connection,
+                  is_orig: bool,
                   object_type: count,
                   instance_number: count,
                   max_apdu: count,
@@ -188,6 +190,7 @@ event bacnet_i_am(c: connection,
 
     set_service(c);
     local bacnet_discovery: BACnet_Discovery;
+    bacnet_discovery$is_orig = is_orig;
     bacnet_discovery$ts  = network_time();
     bacnet_discovery$uid = c$uid;
     bacnet_discovery$id  = c$id;
@@ -204,6 +207,7 @@ event bacnet_i_am(c: connection,
 ################  Defines logging of bacnet_who_has event -> bacnet_discovery.log  ################
 ###################################################################################################
 event bacnet_who_has(c: connection,
+                     is_orig: bool,
                      low_limit: count,
                      high_limit: count,
                      object_type: count,
@@ -212,6 +216,7 @@ event bacnet_who_has(c: connection,
 
     set_service(c);
     local bacnet_discovery: BACnet_Discovery;
+    bacnet_discovery$is_orig = is_orig;
     bacnet_discovery$ts  = network_time();
     bacnet_discovery$uid = c$uid;
     bacnet_discovery$id  = c$id;
@@ -240,6 +245,7 @@ event bacnet_who_has(c: connection,
 ################  Defines logging of bacnet_i_have event -> bacnet_discovery.log  #################
 ###################################################################################################
 event bacnet_i_have(c: connection,
+                    is_orig: bool,
                     device_object_type: count,
                     device_instance_num: count,
                     object_object_type: count,
@@ -248,6 +254,7 @@ event bacnet_i_have(c: connection,
 
     set_service(c);
     local bacnet_discovery: BACnet_Discovery;
+    bacnet_discovery$is_orig = is_orig;
     bacnet_discovery$ts  = network_time();
     bacnet_discovery$uid = c$uid;
     bacnet_discovery$id  = c$id;
@@ -264,6 +271,7 @@ event bacnet_i_have(c: connection,
 #############  Defines logging of bacnet_read_property event -> bacnet_property.log  ##############
 ###################################################################################################
 event bacnet_read_property(c: connection,
+                           is_orig: bool,
                            pdu_service: string,
                            object_type: count,
                            instance_number: count,
@@ -272,6 +280,7 @@ event bacnet_read_property(c: connection,
 
     set_service(c);
     local bacnet_property: BACnet_Property;
+    bacnet_property$is_orig = is_orig;
     bacnet_property$ts  = network_time();
     bacnet_property$uid = c$uid;
     bacnet_property$id  = c$id;
@@ -291,6 +300,7 @@ event bacnet_read_property(c: connection,
 ###########  Defines logging of bacnet_read_property_ack event -> bacnet_property.log  ############
 ###################################################################################################
 event bacnet_read_property_ack(c: connection,
+                               is_orig: bool,
                                pdu_service: string,
                                object_type: count,
                                instance_number: count,
@@ -300,6 +310,7 @@ event bacnet_read_property_ack(c: connection,
 
     set_service(c);
     local bacnet_property: BACnet_Property;
+    bacnet_property$is_orig = is_orig;
     bacnet_property$ts  = network_time();
     bacnet_property$uid = c$uid;
     bacnet_property$id  = c$id;
@@ -354,6 +365,7 @@ event bacnet_read_property_ack(c: connection,
 #############  Defines logging of bacnet_write_property event -> bacnet_property.log  #############
 ###################################################################################################
 event bacnet_write_property(c: connection,
+                            is_orig: bool,
                             object_type: count,
                             instance_number: count,
                             property_identifier: count,
@@ -363,6 +375,7 @@ event bacnet_write_property(c: connection,
 
     set_service(c);
     local bacnet_property: BACnet_Property;
+    bacnet_property$is_orig = is_orig;
     bacnet_property$ts  = network_time();
     bacnet_property$uid = c$uid;
     bacnet_property$id  = c$id;
@@ -417,12 +430,14 @@ event bacnet_write_property(c: connection,
 #############  Defines logging of bacnet_property_error event -> bacnet_property.log  #############
 ###################################################################################################
 event bacnet_property_error(c: connection,
+                            is_orig: bool,
                             pdu_type: count,
                             pdu_service: count,
                             result_code: count){
 
     set_service(c);
     local bacnet_property: BACnet_Property;
+    bacnet_property$is_orig = is_orig;
     bacnet_property$ts  = network_time();
     bacnet_property$uid = c$uid;
     bacnet_property$id  = c$id;
@@ -434,6 +449,7 @@ event bacnet_property_error(c: connection,
 }
 
 event bacnet_read_range(c: connection,
+                        is_orig: bool,
                         object_type: count,
                         instance_number: count,
                         property_identifier: count,
@@ -441,6 +457,7 @@ event bacnet_read_range(c: connection,
 
     set_service(c);
     local bacnet_property: BACnet_Property;
+    bacnet_property$is_orig = is_orig;
     bacnet_property$ts  = network_time();
     bacnet_property$uid = c$uid;
     bacnet_property$id  = c$id;
@@ -457,6 +474,7 @@ event bacnet_read_range(c: connection,
 }
 
 event bacnet_read_range_ack(c: connection,
+                            is_orig: bool,
                             object_type: count,
                             instance_number: count,
                             property_identifier: count,
@@ -466,6 +484,7 @@ event bacnet_read_range_ack(c: connection,
 
     set_service(c);
     local bacnet_property: BACnet_Property;
+    bacnet_property$is_orig = is_orig;
     bacnet_property$ts  = network_time();
     bacnet_property$uid = c$uid;
     bacnet_property$id  = c$id;

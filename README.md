@@ -92,6 +92,7 @@ This log captures BACnet header information for every BACnet/IP packet and logs 
 | ts            | time      | Timestamp                                                 |
 | uid           | string    | Unique ID for this connection                             |
 | id            | conn_id   | Default Zeek connection info (IP addresses, ports)        |
+| is_orig       | bool      | True if the packet is sent from the originator            |
 | bvlc_function | string    | BVLC function                                             |
 | pdu_type      | string    | APDU service type                                         |
 | pdu_service   | string    | APDU service choice                                       |
@@ -111,6 +112,7 @@ This log captures important fields for Who-Is, I-Am, Who-Has, and I-Have message
 | ts                | time      | Timestamp                                                       |
 | uid               | string    | Unique ID for this connection                                   |
 | id                | conn_id   | Default Zeek connection info (IP addresses, ports)              |
+| is_orig           | bool      | True if the message is sent from the originator                 |
 | pdu_service       | string    | APDU service choice (who-is, i-am, who-has, or i-have)          |
 | object_type       | string    | BACnet device's object type                                     |
 | instance_number   | count     | BACnet device's instance number                                 |
@@ -131,6 +133,7 @@ This log captures important variables for Read-Property-Request, Read-Property-A
 | ts                | time      | Timestamp                                                 |
 | uid               | string    | Unique ID for this connection                             |
 | id                | conn_id   | Default Zeek connection info (IP addresses, ports)        |
+| is_orig           | bool      | True if the message is sent from the originator           |
 | pdu_service       | string    | APDU service choice (read or write property services)     |
 | object_type       | string    | BACnet device's object type                               |
 | instance_number   | count     | BACnet device's instance number                           |

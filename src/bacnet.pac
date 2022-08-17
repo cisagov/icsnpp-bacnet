@@ -19,7 +19,6 @@ connection BACNET_Conn(zeek_analyzer: ZeekAnalyzer) {
 
 flow BACNET_Flow(is_orig: bool) {
     datagram = BACNET_PDU(is_orig) withcontext(connection, this);
-
 };
 
 %include bacnet-analyzer.pac
