@@ -202,8 +202,10 @@ event bacnet_i_am(c: connection,
     bacnet_discovery$id  = c$id;
 
     bacnet_discovery$pdu_service = "i-am";
-    bacnet_discovery$object_type = object_types[object_type];
-    bacnet_discovery$instance_number = instance_number;
+    if(object_type != UINT32_MAX)
+        bacnet_discovery$object_type = object_types[object_type];
+    if(instance_number != UINT32_MAX)
+        bacnet_discovery$instance_number = instance_number;
     bacnet_discovery$vendor = vendors[vendor_id];
 
     Log::write(LOG_BACNET_DISCOVERY, bacnet_discovery);
@@ -266,8 +268,13 @@ event bacnet_i_have(c: connection,
     bacnet_discovery$id  = c$id;
 
     bacnet_discovery$pdu_service = "i-have";
-    bacnet_discovery$object_type = object_types[object_object_type];
-    bacnet_discovery$instance_number = object_instance_num;
+
+    if(object_object_type != UINT32_MAX)
+        bacnet_discovery$object_type = object_types[object_object_type];
+
+    if(object_instance_num != UINT32_MAX)
+        bacnet_discovery$instance_number = object_instance_num;
+
     bacnet_discovery$object_name = object_name;
 
     Log::write(LOG_BACNET_DISCOVERY, bacnet_discovery);
