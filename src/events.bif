@@ -202,6 +202,38 @@ event bacnet_property_error%(c: connection,
                              pdu_service: count,
                              result_code: count%);
 
+## ---------------------------------------bacnet-read-range----------------------------------------
+## Event Description:
+##      Event is generated for all BACnet Read_Range packets
+## Event Data:
+##      See process_read_range in bacnet_analyzer.pac
+## Default Output:
+##      No defined log in main.zeek by default
+## ------------------------------------------------------------------------------------------------
+event bacnet_read_range%(c: connection,
+                         is_orig: bool,
+                         object_type: count,
+                         instance_number: count,
+                         property_identifier: count,
+                         property_array_index: count%);
+
+## -------------------------------------bacnet-read-range-ack--------------------------------------
+## Event Description:
+##      Event is generated for all BACnet Read_Range_Ack packets
+## Event Data:
+##      See process_read_range_ack in bacnet_analyzer.pac
+## Default Output:
+##      No defined log in main.zeek by default
+## ------------------------------------------------------------------------------------------------
+event bacnet_read_range_ack%(c: connection,
+                             is_orig: bool,
+                             object_type: count,
+                             instance_number: count,
+                             property_identifier: count,
+                             property_array_index: count,
+                             result_flags: count,
+                             item_count: count%);
+
 ###################################################################################################
 ###################################  END OF LOGGED BY DEFAULT  ####################################
 ###################################################################################################
@@ -643,21 +675,6 @@ event bacnet_vt_data%(c: connection,
                       vt_data: string,
                       vt_flag: count%);
 
-## ---------------------------------------bacnet-read-range----------------------------------------
-## Event Description:
-##      Event is generated for all BACnet Read_Range packets
-## Event Data:
-##      See process_read_range in bacnet_analyzer.pac
-## Default Output:
-##      No defined log in main.zeek by default
-## ------------------------------------------------------------------------------------------------
-event bacnet_read_range%(c: connection,
-                         is_orig: bool,
-                         object_type: count,
-                         instance_number: count,
-                         property_identifier: count,
-                         property_array_index: count%);
-
 ## ----------------------------------bacnet-life-safety-operation----------------------------------
 ## Event Description:
 ##      Event is generated for all BACnet Life_Safety_Operation packets
@@ -816,23 +833,6 @@ event bacnet_vt_data_ack%(c: connection,
                           is_orig: bool,
                           data_accepted: count,
                           accepted_count: count%);
-
-## -------------------------------------bacnet-read-range-ack--------------------------------------
-## Event Description:
-##      Event is generated for all BACnet Read_Range_Ack packets
-## Event Data:
-##      See process_read_range_ack in bacnet_analyzer.pac
-## Default Output:
-##      No defined log in main.zeek by default
-## ------------------------------------------------------------------------------------------------
-event bacnet_read_range_ack%(c: connection,
-                             is_orig: bool,
-                             object_type: count,
-                             instance_number: count,
-                             property_identifier: count,
-                             property_array_index: count,
-                             result_flags: count,
-                             item_count: count%);
 
 ## --------------------------------bacnet-get-event-information-ack--------------------------------
 ## Event Description:

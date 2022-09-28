@@ -12,44 +12,79 @@
     static string object_types[] = {"analog-input","analog-output","analog-value","binary-input","binary-output","binary-value","calendar","command","device","event-enrollment","file","group","loop","multi-state-input","multi-state-output","notification-class","program","schedule","averaging","multi-state-value","trend-log","life-safety-point","life-safety-zone","accumulator","pulse-converter","event-log","global-group","trend-log-multiple","load-control","structured-view","access-door","access-credential","access-point","access-rights","access-user","access-zone","credential-data-input","network-security","bitstring-value","characterstring-value","date-pattern-value","date-value","datetime-pattern-value","datetime-value","integer-value","large-analog-value","octetstring-value","positive-integer-value","time-pattern-value","time-value"};
 
     // BACnetObjectIdentifier Object
-    typedef struct BACnetObjectIdentifier {
+    typedef struct BACnetObjectIdentifier
+    {
         uint32 object_type, instance_number;
 
         // Initializes BACnetObjectIdentifier object with default data
-        BACnetObjectIdentifier(){
+        BACnetObjectIdentifier()
+        {
             object_type = UINT32_MAX;
             instance_number = UINT32_MAX;
         }
         // Creates BACnetObjectIdentifier object from BACnet Tag data
-        BACnetObjectIdentifier( const_bytestring data ){
-            object_type = (data[0] << 2) + (data[1] >> 6);
-            instance_number = ((data[1] & 0x3f) << 16) + (data[2] << 8) + data[3];
+        BACnetObjectIdentifier( const_bytestring data )
+        {
+            if ( data.length() == 4 )
+            {
+                object_type = (data[0] << 2) + (data[1] >> 6);
+                instance_number = ((data[1] & 0x3f) << 16) + (data[2] << 8) + data[3];
+            }
+            else
+            {
+                object_type = UINT32_MAX;
+                instance_number = UINT32_MAX;
+            }
         }
     }BACnetObjectIdentifier;
 
     // BACnetDate Object
-    typedef struct BACnetDate{
+    typedef struct BACnetDate
+    {
         uint16 year, month, day, day_of_week;
 
         // Creates BACnetDate object from BACnet Tag data
-        BACnetDate( const_bytestring data ){
-            year = 1900 + data[0];
-            month = data[1];
-            day = data[2];
-            day_of_week = data[3];
+        BACnetDate( const_bytestring data )
+        {
+            if ( data.length() == 4 )
+            {
+                year = 1900 + data[0];
+                month = data[1];
+                day = data[2];
+                day_of_week = data[3];
+            }
+            else
+            {
+                year = UINT16_MAX;
+                month = UINT16_MAX;
+                day = UINT16_MAX;
+                day_of_week = UINT16_MAX;
+            }
         }
     }BACnetDate;
 
     // BACnetTime Object
-    typedef struct BACnetTime {
+    typedef struct BACnetTime
+    {
         uint16 hour, minute, second, millisecond;
 
         // Creates BACnetTime object from BACnet Tag data
-        BACnetTime( const_bytestring data ){
-            hour = data[0];
-            minute = data[1];
-            second = data[2];
-            millisecond = data[3];
+        BACnetTime( const_bytestring data )
+        {
+            if ( data.length() == 4 )
+            {
+                hour = data[0];
+                minute = data[1];
+                second = data[2];
+                millisecond = data[3];
+            }
+            else
+            {
+                hour = UINT16_MAX;
+                minute = UINT16_MAX;
+                second = UINT16_MAX;
+                millisecond = UINT16_MAX;
+            }
         }
     }BACnetTime;
 
@@ -96,15 +131,19 @@
             case 9: // Enumerated
                 return to_string(get_unsigned(data));
             case 10: // BACnetDate
-                str += zeek::util::fmt("%d/%d/%d",data[1],data[2],data[0]+1900);
+                if(data.length() == 4)
+                    str += zeek::util::fmt("%d/%d/%d",data[1],data[2],data[0]+1900);
                 return str;
             case 11: // BACnetTime
-                str += zeek::util::fmt("%d:%d:%d.%d",data[0],data[1],data[2],data[3]);
+                if(data.length() == 4)
+                    str += zeek::util::fmt("%d:%d:%d.%d",data[0],data[1],data[2],data[3]);
                 return str;
             case 12: // BACnetObjectIdentifier
-                str += object_types[(data[0] << 2) + (data[1] >> 6)];
-                str += zeek::util::fmt(": %d",((data[1] & 0x3f) << 16) + (data[2] << 8) + data[3]);
-                //str += zeek::util::fmt("ObjectIdentifier: %d, %d",(data[0] << 2) + (data[1] >> 6),((data[1] & 0x3f) << 16) + (data[2] << 8) + data[3]);
+                if(data.length() == 4)
+                {
+                    str += object_types[(data[0] << 2) + (data[1] >> 6)];
+                    str += zeek::util::fmt(": %d",((data[1] & 0x3f) << 16) + (data[2] << 8) + data[3]);
+                }
                 return str;
             default:
                 return str;
@@ -116,29 +155,24 @@
     {
         uint32 number = 0;
         int32 ret_val = 0;
-        if (data.length() == 1)
+        if ( data.length() == 1 )
         {
             number = data[0];
             int8 tmp = (int)number;
             ret_val = tmp;
         }
-        else if (data.length() == 2)
+        else if ( data.length() == 2 )
         {
             number = (data[0] << 8) + data[1];
             int16 tmp = (int)number;
             ret_val = tmp;
         }
-        else if (data.length() == 4)
+        else if ( data.length() == 4 )
         {
             number = (data[0] << 16) + (data[1] << 8) + data[2];
             int32 tmp = (int)number;
             ret_val = tmp;
         }
-        //for ( int32 i = 0; i < data.length(); ++i ){
-        //    number <<= 8;
-        //    number |= data[i];
-        //}
-        //return -100;
         return ret_val;
     }
 
@@ -149,28 +183,42 @@
         for ( int32 i = 0; i < data.length(); ++i ){
             number <<= 8;
             number |= data[i];
+
+            if ( i == 3 )
+                return number;
         }
         return number;
     }
 
     // Converts BACnet Tag data to float
-    float get_float(const_bytestring data){
+    float get_float(const_bytestring data)
+    {
         char float_result[4];
+        if ( data.length() != 4 )
+            return 0;
+
         for( uint8 i = 0; i < 4; ++i)
             float_result[i] = data[3-i];
+
         return *((float*)float_result);
     }
 
     // Converts BACnet Tag data to double
-    double get_double(const_bytestring data){
+    double get_double(const_bytestring data)
+    {
+        if ( data.length() != 8 )
+            return 0;
+
         char double_result[8];
         for( uint8 i = 0; i < 8; ++i)
             double_result[i] = data[8-i];
+    
         return *((double*)double_result);
     }
 
     // Converts BACnet Tag data to string
-    string get_string(const_bytestring data){
+    string get_string(const_bytestring data)
+    {
         string str = "";
 
         // Ensure character set is UTF-8
@@ -316,14 +364,16 @@ refine flow BACNET_Flow += {
             if ( ::bacnet_i_have )
             {
                 BACnetObjectIdentifier device_identifier, object_identifier;
-                
-                if ( ${tags[0].tag_length} == 4 )
+                string object_name = "";
+
+                if ( ${tags}->size() > 0 && ${tags[0].tag_length} == 4 )
                     device_identifier = {${tags[0].tag_data}};
                 
-                if ( ${tags[1].tag_length} == 4 )
+                if ( ${tags}->size() > 1 && ${tags[1].tag_length} == 4 )
                     object_identifier = {${tags[1].tag_data}};
 
-                string object_name = get_string(${tags[2].tag_data});
+                if ( ${tags}->size() > 2 )
+                    object_name = get_string(${tags[2].tag_data});
 
                 zeek::BifEvent::enqueue_bacnet_i_have(connection()->zeek_analyzer(),
                                                       connection()->zeek_analyzer()->Conn(),
@@ -1396,21 +1446,24 @@ refine flow BACNET_Flow += {
         %{
             if ( ::bacnet_read_property )
             {
-                BACnetObjectIdentifier object_identifier = {${tags[0].tag_data}};
-                uint32 property_identifier = get_unsigned(${tags[1].tag_data});
-                uint32 property_array_index = UINT32_MAX;
+                if ( ${tags}->size() >= 2 )
+                {
+                    BACnetObjectIdentifier object_identifier = {${tags[0].tag_data}};
+                    uint32 property_identifier = get_unsigned(${tags[1].tag_data});
+                    uint32 property_array_index = UINT32_MAX;
 
-                if(${tags}->size() > 2)
-                    property_array_index = get_unsigned(${tags[2].tag_data});
+                    if( ${tags}->size() > 2 )
+                        property_array_index = get_unsigned(${tags[2].tag_data});
 
-                zeek::BifEvent::enqueue_bacnet_read_property(connection()->zeek_analyzer(),
-                                                             connection()->zeek_analyzer()->Conn(),
-                                                             is_orig,
-                                                             zeek::make_intrusive<zeek::StringVal>("read-property-request"),
-                                                             object_identifier.object_type,
-                                                             object_identifier.instance_number,
-                                                             property_identifier,
-                                                             property_array_index);
+                    zeek::BifEvent::enqueue_bacnet_read_property(connection()->zeek_analyzer(),
+                                                                 connection()->zeek_analyzer()->Conn(),
+                                                                 is_orig,
+                                                                 zeek::make_intrusive<zeek::StringVal>("read-property-request"),
+                                                                 object_identifier.object_type,
+                                                                 object_identifier.instance_number,
+                                                                 property_identifier,
+                                                                 property_array_index);
+                }
             }
             return true;
         %}
@@ -1429,16 +1482,23 @@ refine flow BACNET_Flow += {
         %{
             if ( ::bacnet_read_property )
             {
-                for ( uint32 x = 0; x < ${tags}->size(); ++x ){
+                for ( uint32 x = 0; x < ${tags}->size(); ++x )
+                {
                     BACnetObjectIdentifier object_identifier = {${tags[x].tag_data}};
                     x += 1;
-                    for ( uint32 i = x; i < ${tags}->size(); ++i ){
-                        if(${tags[i].named_tag} == OPENING){
+                    for ( uint32 i = x; i < ${tags}->size(); ++i )
+                    {
+                        if(${tags[i].named_tag} == OPENING)
+                        {
                             continue;
-                        }else if(${tags[i].named_tag} == CLOSING){
+                        }
+                        else if(${tags[i].named_tag} == CLOSING)
+                        {
                             x = i;
                             break;
-                        }else{
+                        }
+                        else
+                        {
                             zeek::BifEvent::enqueue_bacnet_read_property(connection()->zeek_analyzer(),
                                                                          connection()->zeek_analyzer()->Conn(),
                                                                          is_orig,
@@ -1483,40 +1543,47 @@ refine flow BACNET_Flow += {
         %{
             if ( ::bacnet_write_property )
             {
-                BACnetObjectIdentifier object_identifier = {${tags[0].tag_data}};
-                uint32 property_identifier = get_unsigned(${tags[1].tag_data});
-                uint32 property_array_index = UINT32_MAX;
-                uint8 priority = UINT8_MAX;
-                string property_value = "";
-                int8 first = 1;
-                for ( uint32 i = 2; i < ${tags}->size(); ++i ){
-                    switch(${tags[i].tag_num}){
-                        case 2:
-                            property_array_index = get_unsigned(${tags[i].tag_data});
-                            break;
-                        case 3:
-                            if ( first == 1 ){
-                                property_value = parse_tag(${tags[i+1].tag_num},${tags[i+1].tag_class},${tags[i+1].tag_data},${tags[i+1].tag_length});
-                                first = 0;
-                            }
-                            break;
-                        case 4:
-                            priority = ${tags[i].tag_data[0]};
-                        default:
-                            break;
+                if ( ${tags}->size() > 2 )
+                {
+                    BACnetObjectIdentifier object_identifier = {${tags[0].tag_data}};
+                    uint32 property_identifier = get_unsigned(${tags[1].tag_data});
+                    uint32 property_array_index = UINT32_MAX;
+                    uint8 priority = UINT8_MAX;
+                    string property_value = "";
+
+                    int8 first = 1;
+                    
+                    for ( uint32 i = 2; i < ${tags}->size(); ++i )
+                    {
+                        switch(${tags[i].tag_num})
+                        {
+                            case 2:
+                                property_array_index = get_unsigned(${tags[i].tag_data});
+                                break;
+                            case 3:
+                                if ( first == 1 )
+                                {
+                                    property_value = parse_tag(${tags[i+1].tag_num},${tags[i+1].tag_class},${tags[i+1].tag_data},${tags[i+1].tag_length});
+                                    first = 0;
+                                }
+                                break;
+                            case 4:
+                                priority = ${tags[i].tag_data[0]};
+                            default:
+                                break;
+                        }
                     }
+
+                    zeek::BifEvent::enqueue_bacnet_write_property(connection()->zeek_analyzer(),
+                                                                  connection()->zeek_analyzer()->Conn(),
+                                                                  is_orig,
+                                                                  object_identifier.object_type,
+                                                                  object_identifier.instance_number,
+                                                                  property_identifier,
+                                                                  property_array_index,
+                                                                  priority,
+                                                                  zeek::make_intrusive<zeek::StringVal>(property_value));
                 }
-
-
-                zeek::BifEvent::enqueue_bacnet_write_property(connection()->zeek_analyzer(),
-                                                              connection()->zeek_analyzer()->Conn(),
-                                                              is_orig,
-                                                              object_identifier.object_type,
-                                                              object_identifier.instance_number,
-                                                              property_identifier,
-                                                              property_array_index,
-                                                              priority,
-                                                              zeek::make_intrusive<zeek::StringVal>(property_value));
             }
             return true;
         %}
@@ -1571,8 +1638,10 @@ refine flow BACNET_Flow += {
                 uint8 enable_disable = UINT8_MAX;
                 string password = "";
 
-                for ( uint32 i = 0; i < ${tags}->size(); ++i ){
-                    switch(${tags[i].tag_num}){
+                for ( uint32 i = 0; i < ${tags}->size(); ++i )
+                {
+                    switch(${tags[i].tag_num})
+                    {
                         case 0:
                             time_duration = get_unsigned(${tags[i].tag_data});
                             break;
@@ -1651,9 +1720,8 @@ refine flow BACNET_Flow += {
                 uint8 i = 1;
                 BACnetObjectIdentifier object_identifier = {${tags[i].tag_data}};
 
-                if( ${tags[i].tag_num} == 1 ){
+                if( ${tags[i].tag_num} == 1 )
                     i += 1;
-                }
 
                 uint8 message_priority = ${tags[i].tag_data[0]};;
                 string message = get_string(${tags[i+1].tag_data});
@@ -1805,20 +1873,23 @@ refine flow BACNET_Flow += {
         %{
             if ( ::bacnet_read_range )
             {
-                BACnetObjectIdentifier object_identifier = {${tags[0].tag_data}};
-                uint32 property_identifier = get_unsigned(${tags[1].tag_data});
-                uint32 property_array_index = UINT32_MAX;
+                if ( ${tags}->size() >= 2 )
+                {
+                    BACnetObjectIdentifier object_identifier = {${tags[0].tag_data}};
+                    uint32 property_identifier = get_unsigned(${tags[1].tag_data});
+                    uint32 property_array_index = UINT32_MAX;
 
-                if(${tags}->size() > 2)
-                    property_array_index = get_unsigned(${tags[2].tag_data});
+                    if(${tags}->size() > 2)
+                        property_array_index = get_unsigned(${tags[2].tag_data});
 
-                zeek::BifEvent::enqueue_bacnet_read_range(connection()->zeek_analyzer(),
-                                                          connection()->zeek_analyzer()->Conn(),
-                                                          is_orig,
-                                                          object_identifier.object_type,
-                                                          object_identifier.instance_number,
-                                                          property_identifier,
-                                                          property_array_index);
+                    zeek::BifEvent::enqueue_bacnet_read_range(connection()->zeek_analyzer(),
+                                                              connection()->zeek_analyzer()->Conn(),
+                                                              is_orig,
+                                                              object_identifier.object_type,
+                                                              object_identifier.instance_number,
+                                                              property_identifier,
+                                                              property_array_index);
+                }
             }
             return true;
         %}
@@ -1903,12 +1974,14 @@ refine flow BACNET_Flow += {
                 uint32 subscriber_process_id = get_unsigned(${tags[0].tag_data});
                 BACnetObjectIdentifier monitored_object_identifer = {${tags[1].tag_data}};
 
-                if(${tags[i].tag_num} == 2){
+                if(${tags[i].tag_num} == 2)
+                {
                     issue_confirmed = ${tags[i].tag_data[0]};
                     i += 1;
                 }
 
-                if(${tags[i].tag_num} == 3){
+                if(${tags[i].tag_num} == 3)
+                {
                     lifetime = get_unsigned(${tags[0].tag_data});
                     i += 1;
                 }
@@ -2151,29 +2224,36 @@ refine flow BACNET_Flow += {
         %{
             if ( ::bacnet_read_property_ack )
             {
-                BACnetObjectIdentifier object_identifier = {${tags[0].tag_data}};
-                uint32 property_identifier = get_unsigned(${tags[1].tag_data});
-                uint32 property_array_index = UINT32_MAX;
+                if ( ${tags}->size() > 2 )
+                {
+                    BACnetObjectIdentifier object_identifier = {${tags[0].tag_data}};
+                    uint32 property_identifier = get_unsigned(${tags[1].tag_data});
+                    uint32 property_array_index = UINT32_MAX;
 
-                uint8 i = 2;
+                    uint8 i = 2;
 
-                if(${tags[i].tag_num} == 2){
-                    property_array_index = get_unsigned(${tags[i].tag_data});
+                    if(${tags[i].tag_num} == 2)
+                    {
+                        property_array_index = get_unsigned(${tags[i].tag_data});
+                        i += 1;
+                    }
                     i += 1;
+
+                    string property_value = "";
+                    
+                    if ( ${tags}->size() >= i )
+                        property_value = parse_tag(${tags[i].tag_num},${tags[i].tag_class},${tags[i].tag_data},${tags[i].tag_length});
+
+                    zeek::BifEvent::enqueue_bacnet_read_property_ack(connection()->zeek_analyzer(),
+                                                                    connection()->zeek_analyzer()->Conn(),
+                                                                    is_orig,
+                                                                    zeek::make_intrusive<zeek::StringVal>("read-property-ack"),
+                                                                    object_identifier.object_type,
+                                                                    object_identifier.instance_number,
+                                                                    property_identifier,
+                                                                    property_array_index,
+                                                                    zeek::make_intrusive<zeek::StringVal>(property_value));
                 }
-                i += 1;
-
-                string property_value = parse_tag(${tags[i].tag_num},${tags[i].tag_class},${tags[i].tag_data},${tags[i].tag_length});
-
-                zeek::BifEvent::enqueue_bacnet_read_property_ack(connection()->zeek_analyzer(),
-                                                                 connection()->zeek_analyzer()->Conn(),
-                                                                 is_orig,
-                                                                 zeek::make_intrusive<zeek::StringVal>("read-property-ack"),
-                                                                 object_identifier.object_type,
-                                                                 object_identifier.instance_number,
-                                                                 property_identifier,
-                                                                 property_array_index,
-                                                                 zeek::make_intrusive<zeek::StringVal>(property_value));
             }
             return true;
         %}
@@ -2376,28 +2456,37 @@ refine flow BACNET_Flow += {
         %{
             if ( ::bacnet_read_range_ack )
             {
-                BACnetObjectIdentifier object_identifier = {${tags[0].tag_data}};
-                uint32 property_identifier = get_unsigned(${tags[1].tag_data});
-                uint32 property_array_index = UINT32_MAX;
+                if ( ${tags}->size() > 2 )
+                {
+                    BACnetObjectIdentifier object_identifier = {${tags[0].tag_data}};
+                    uint32 property_identifier = get_unsigned(${tags[1].tag_data});
+                    uint32 property_array_index = UINT32_MAX;
+                    uint8 result_flags = UINT8_MAX;
+                    uint32 item_count = UINT32_MAX;
 
-                uint8 i = 2;
-                if(${tags[2].tag_num} == 2){
-                    property_array_index = get_unsigned(${tags[2].tag_data});
-                    i += 1;
+                    uint8 i = 2;
+                    if( ${tags[2].tag_num} == 2 )
+                    {
+                        property_array_index = get_unsigned(${tags[2].tag_data});
+                        i += 1;
+                    }
+
+                    if ( ${tags}->size() > (i+1) )
+                    {
+                        result_flags = ${tags[i].tag_data[0]};
+                        item_count = get_unsigned(${tags[i+1].tag_data});
+                    }
+
+                    zeek::BifEvent::enqueue_bacnet_read_range_ack(connection()->zeek_analyzer(),
+                                                                  connection()->zeek_analyzer()->Conn(),
+                                                                  is_orig,
+                                                                  object_identifier.object_type,
+                                                                  object_identifier.instance_number,
+                                                                  property_identifier,
+                                                                  property_array_index,
+                                                                  result_flags,
+                                                                  item_count);
                 }
-
-                uint8 result_flags = ${tags[i].tag_data[0]};
-                uint32 item_count = get_unsigned(${tags[i+1].tag_data});
-
-                zeek::BifEvent::enqueue_bacnet_read_range_ack(connection()->zeek_analyzer(),
-                                                              connection()->zeek_analyzer()->Conn(),
-                                                              is_orig,
-                                                              object_identifier.object_type,
-                                                              object_identifier.instance_number,
-                                                              property_identifier,
-                                                              property_array_index,
-                                                              result_flags,
-                                                              item_count);
             }
             return true;
         %}
