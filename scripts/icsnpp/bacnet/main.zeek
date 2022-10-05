@@ -393,7 +393,7 @@ event bacnet_write_property(c: connection,
     bacnet_property$uid = c$uid;
     bacnet_property$id  = c$id;
 
-    bacnet_property$pdu_service = "write-property";
+    bacnet_property$pdu_service = "write_property";
     bacnet_property$object_type = object_types[object_type];
     bacnet_property$instance_number = instance_number;
     bacnet_property$property = property_identifiers[property_identifier];
