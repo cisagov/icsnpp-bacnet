@@ -7,6 +7,10 @@
 ##
 ## Copyright (c) 2020 Battelle Energy Alliance, LLC.  All rights reserved.
 
+%extern{
+    #include "zeek/file_analysis/Manager.h"
+%}
+
 %header{
 
     static string object_types[] = {"analog-input","analog-output","analog-value","binary-input","binary-output","binary-value","calendar","command","device","event-enrollment","file","group","loop","multi-state-input","multi-state-output","notification-class","program","schedule","averaging","multi-state-value","trend-log","life-safety-point","life-safety-zone","accumulator","pulse-converter","event-log","global-group","trend-log-multiple","load-control","structured-view","access-door","access-credential","access-point","access-rights","access-user","access-zone","credential-data-input","network-security","bitstring-value","characterstring-value","date-pattern-value","date-value","datetime-pattern-value","datetime-value","integer-value","large-analog-value","octetstring-value","positive-integer-value","time-pattern-value","time-value"};
@@ -93,21 +97,22 @@
     float get_float(const_bytestring data);
     double get_double(const_bytestring data);
     string get_string(const_bytestring data);
+    string get_string2(const_bytestring data);
 
-    string parse_tag(uint8 tag_num, uint8 tag_class, const_bytestring data, uint32 tag_length);
+    string parse_tag(uint8 tag_num, uint8 tag_class, const_bytestring data, uint32 tag_length, uint32 tag_length_a);
 
     %}
 
 %code{
     // Parses Application Tag based on tag_num and returns string representation of data
-    string parse_tag(uint8 tag_num, uint8 tag_class, const_bytestring data, uint32 tag_length)
+    string parse_tag(uint8 tag_num, uint8 tag_class, const_bytestring data, uint32 tag_length, uint32 tag_length_a)
     {
         string str = "";
         switch(tag_num){
             case 0: // Null
                 return str;
             case 1: // Boolean
-                return tag_length==1 ? "true" : "false";
+                return tag_length_a==1 ? "true" : "false";
             case 2: // Unsigned Integer
                 return to_string(get_unsigned(data));
             case 3: // Signed Integer
@@ -227,6 +232,19 @@
 
         for ( int32 i = 1; i < data.length(); ++i )
             str += data[i];
+
+        return str;
+    }
+    
+    // Converts BACnet Tag data to string
+    string get_string2(const_bytestring data)
+    {
+        string str = "";
+
+        for ( int32 i = 0; i < data.length(); ++i )
+        {
+            str += data[i];
+        }
 
         return str;
     }
@@ -1261,25 +1279,32 @@ refine flow BACNET_Flow += {
     ## ------------------------------------------------------------------------------------------------
     function process_atomic_write_file(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
+            uint32 record_count = UINT32_MAX;
+            string access_type;
+            string data_to_write;
+
+            BACnetObjectIdentifier file_identifier = {${tags[0].tag_data}};
+            uint32 file_start = get_unsigned(${tags[2].tag_data});
+
+            if(${tags[1].tag_num} == 0){
+                access_type = "Stream";
+                data_to_write = get_string2(${tags[3].tag_data});
+
+                zeek::file_mgr->DataIn(${tags[3].tag_data}.begin(),
+                                       ${tags[3].tag_length},
+                                       file_start,
+                                       connection()->zeek_analyzer()->GetAnalyzerTag(),
+                                       connection()->zeek_analyzer()->Conn(),
+                                       is_orig);
+            }
+            else{
+                access_type = "Record";
+                record_count = get_unsigned(${tags[3].tag_data});
+                data_to_write = get_string2(${tags[4].tag_data});
+            }
+
             if ( ::bacnet_atomic_write_file )
             {
-                uint32 record_count = UINT32_MAX;
-                string access_type;
-                string data_to_write;
-
-                BACnetObjectIdentifier file_identifier = {${tags[0].tag_data}};
-                uint32 file_start = get_unsigned(${tags[2].tag_data});
-
-                if(${tags[1].tag_num} == 0){
-                    access_type = "Stream";
-                    data_to_write = get_string(${tags[3].tag_data});
-                }
-                else{
-                    access_type = "Record";
-                    record_count = get_unsigned(${tags[3].tag_data});
-                    data_to_write = get_string(${tags[4].tag_data});
-                }
-
                 zeek::BifEvent::enqueue_bacnet_atomic_write_file(connection()->zeek_analyzer(),
                                                                  connection()->zeek_analyzer()->Conn(),
                                                                  is_orig,
@@ -1563,7 +1588,7 @@ refine flow BACNET_Flow += {
                             case 3:
                                 if ( first == 1 )
                                 {
-                                    property_value = parse_tag(${tags[i+1].tag_num},${tags[i+1].tag_class},${tags[i+1].tag_data},${tags[i+1].tag_length});
+                                    property_value = parse_tag(${tags[i+1].tag_num},${tags[i+1].tag_class},${tags[i+1].tag_data},${tags[i+1].tag_length},${tags[i+1].tag_length_a});
                                     first = 0;
                                 }
                                 break;
@@ -2111,25 +2136,41 @@ refine flow BACNET_Flow += {
     ## ------------------------------------------------------------------------------------------------
     function process_atomic_read_file_ack(is_orig: bool, tags: BACnet_Tag[]): bool
         %{
+            uint32 record_count = UINT32_MAX;
+            string access_type;
+            string data_to_return;
+
+            uint8 end_of_file = ${tags[0].tag_length_a};
+            uint32 file_start = get_unsigned(${tags[2].tag_data});
+
+            if(${tags[1].tag_num} == 0)
+            {
+                access_type = "Stream";
+                data_to_return = get_string2(${tags[3].tag_data});
+
+                zeek::file_mgr->DataIn(${tags[3].tag_data}.begin(),
+                                        ${tags[3].tag_length},
+                                        file_start,
+                                        connection()->zeek_analyzer()->GetAnalyzerTag(),
+                                        connection()->zeek_analyzer()->Conn(),
+                                        is_orig);
+
+                if( end_of_file == 1 )
+                {
+                    zeek::file_mgr->EndOfFile(connection()->zeek_analyzer()->GetAnalyzerTag(),
+                                              connection()->zeek_analyzer()->Conn(),
+                                              is_orig);
+                }
+            }
+            else
+            {
+                access_type = "Record";
+                record_count = get_unsigned(${tags[3].tag_data});
+                data_to_return = get_string2(${tags[4].tag_data});
+            }
+
             if ( ::bacnet_atomic_read_file_ack )
             {
-                uint32 record_count = UINT32_MAX;
-                string access_type;
-                string data_to_return;
-
-                uint8 end_of_file = ${tags[0].tag_data[0]};
-                uint32 file_start = get_unsigned(${tags[2].tag_data});
-
-                if(${tags[1].tag_num} == 0){
-                    access_type = "Stream";
-                    data_to_return = get_string(${tags[3].tag_data});
-                }
-                else{
-                    access_type = "Record";
-                    record_count = get_unsigned(${tags[3].tag_data});
-                    data_to_return = get_string(${tags[4].tag_data});
-                }
-
                 zeek::BifEvent::enqueue_bacnet_atomic_read_file_ack(connection()->zeek_analyzer(),
                                                                     connection()->zeek_analyzer()->Conn(),
                                                                     is_orig,
@@ -2242,7 +2283,7 @@ refine flow BACNET_Flow += {
                     string property_value = "";
                     
                     if ( ${tags}->size() >= i )
-                        property_value = parse_tag(${tags[i].tag_num},${tags[i].tag_class},${tags[i].tag_data},${tags[i].tag_length});
+                        property_value = parse_tag(${tags[i].tag_num},${tags[i].tag_class},${tags[i].tag_data},${tags[i].tag_length},${tags[i].tag_length_a});
 
                     zeek::BifEvent::enqueue_bacnet_read_property_ack(connection()->zeek_analyzer(),
                                                                     connection()->zeek_analyzer()->Conn(),
@@ -2322,7 +2363,7 @@ refine flow BACNET_Flow += {
                                                                              property_array_index,
                                                                              zeek::make_intrusive<zeek::StringVal>(property_value));
                         }else{
-                            property_value = parse_tag(${tags[i].tag_num},${tags[i].tag_class},${tags[i].tag_data},${tags[i].tag_length});
+                            property_value = parse_tag(${tags[i].tag_num},${tags[i].tag_class},${tags[i].tag_data},${tags[i].tag_length},${tags[i].tag_length_a});
                             property_exists = 1;
                             zeek::BifEvent::enqueue_bacnet_read_property_ack(connection()->zeek_analyzer(),
                                                                              connection()->zeek_analyzer()->Conn(),
@@ -2465,13 +2506,14 @@ refine flow BACNET_Flow += {
                     uint32 item_count = UINT32_MAX;
 
                     uint8 i = 2;
+                    uint8 x;
                     if( ${tags[2].tag_num} == 2 )
                     {
                         property_array_index = get_unsigned(${tags[2].tag_data});
                         i += 1;
                     }
-
-                    if ( ${tags}->size() > (i+1) )
+                    x = i + 1;
+                    if ( ${tags}->size() > x )
                     {
                         result_flags = ${tags[i].tag_data[0]};
                         item_count = get_unsigned(${tags[i+1].tag_data});
