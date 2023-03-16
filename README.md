@@ -83,9 +83,9 @@ tar xvzf build/ICSNPP_Bacnet.tgz -C $ZEEK_PLUGIN_PATH
 
 #### Overview
 
-This log captures BACnet header information for every BACnet/IP packet and logs it to **bacnet.log**.
+This log captures BACnet header information for every BACnet/IP packet and logs it to **bacnet.log**. BACnet has two different protocol data layer messages (PDUs) - Application Protocol Data Unit (APDU) and Network Protocol Data Unit (NPDU). Both APDU and NPDU messages are logged to bacnet.log, but fields captured and logged are slightly different as seen below.
 
-#### Fields Captured
+#### Fields Captured (BACnet-APDU Packets)
 
 | Field         | Type      | Description                                               |
 | ------------- |-----------|-----------------------------------------------------------| 
@@ -98,6 +98,20 @@ This log captures BACnet header information for every BACnet/IP packet and logs 
 | pdu_service   | string    | APDU service choice                                       |
 | invoke_id     | count     | Unique ID for all outstanding confirmed request/ACK APDUs |
 | result_code   | string    | Error code or reject/abort reason                         |
+
+#### Fields Captured (BACnet-NPDU Packets)
+
+| Field         | Type      | Description                                               |
+| ------------- |-----------|-----------------------------------------------------------| 
+| ts            | time      | Timestamp                                                 |
+| uid           | string    | Unique ID for this connection                             |
+| id            | conn_id   | Default Zeek connection info (IP addresses, ports)        |
+| is_orig       | bool      | True if the packet is sent from the originator            |
+| bvlc_function | string    | BVLC function                                             |
+| pdu_type      | string    | static "NPDU" string                                      |
+| pdu_service   | string    | NPDU message type                                         |
+| invoke_id     | count     | N/A                                                       |
+| result_code   | string    | N/A                                                       |
 
 ### Discovery Log (bacnet_discovery.log)
 

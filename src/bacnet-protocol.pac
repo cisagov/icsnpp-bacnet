@@ -74,7 +74,7 @@ type BVLC_Header(is_orig: bool) = record {
 type BVLC_Result(is_orig: bool) = record {
     result_code     : uint16;
 } &let {
-    deliver: bool = $context.flow.process_bacnet_header(is_orig, 0x00, -1, -1, 0, result_code);
+    deliver: bool = $context.flow.process_bacnet_apdu_header(is_orig, 0x00, -1, -1, 0, result_code);
 };
 
 ## -------------------------------Write-Broadcast-Distribution-Table-------------------------------
@@ -90,7 +90,7 @@ type BVLC_Result(is_orig: bool) = record {
 type Write_Broadcast_Distribution_Table(is_orig: bool) = record {
     bdt_entries     : BDT_Entry[] &until($input == 0);
 } &let {
-    deliver: bool = $context.flow.process_bacnet_header(is_orig, 0x01, -1, -1, 0, 0);
+    deliver: bool = $context.flow.process_bacnet_apdu_header(is_orig, 0x01, -1, -1, 0, 0);
 };
 
 ## -------------------------------Read-Broadcast-Distribution-Table--------------------------------
@@ -104,7 +104,7 @@ type Write_Broadcast_Distribution_Table(is_orig: bool) = record {
 ## ------------------------------------------------------------------------------------------------
 type Read_Broadcast_Distribution_Table(is_orig: bool) = record {
 } &let {
-    deliver: bool = $context.flow.process_bacnet_header(is_orig, 0x02, -1, -1, 0, 0);
+    deliver: bool = $context.flow.process_bacnet_apdu_header(is_orig, 0x02, -1, -1, 0, 0);
 };
 
 ## -----------------------------Read-Broadcast-Distribution-Table-ACK------------------------------
@@ -120,7 +120,7 @@ type Read_Broadcast_Distribution_Table(is_orig: bool) = record {
 type Read_Broadcast_Distribution_Table_ACK(is_orig: bool) = record {
     bdt_entries     : BDT_Entry[] &until($input == 0);
 } &let {
-    deliver: bool = $context.flow.process_bacnet_header(is_orig, 0x03, -1, -1, 0, 0);
+    deliver: bool = $context.flow.process_bacnet_apdu_header(is_orig, 0x03, -1, -1, 0, 0);
 };
 
 ## -----------------------------------------Forwarded-NPDU-----------------------------------------
@@ -156,7 +156,7 @@ type Forwarded_NPDU(is_orig: bool) = record {
 type Register_Foreign_Device(is_orig: bool) = record {
     ttl             : uint16;
 } &let {
-    deliver: bool = $context.flow.process_bacnet_header(is_orig, 0x05, -1, -1, 0, 0);
+    deliver: bool = $context.flow.process_bacnet_apdu_header(is_orig, 0x05, -1, -1, 0, 0);
 };
 
 ## -----------------------------------Read-Foreign-Device-Table------------------------------------
@@ -170,7 +170,7 @@ type Register_Foreign_Device(is_orig: bool) = record {
 ## ------------------------------------------------------------------------------------------------
 type Read_Foreign_Device_Table(is_orig: bool) = record {
 } &let {
-    deliver: bool = $context.flow.process_bacnet_header(is_orig, 0x06, -1, -1, 0, 0);
+    deliver: bool = $context.flow.process_bacnet_apdu_header(is_orig, 0x06, -1, -1, 0, 0);
 };
 
 ## ---------------------------------Read-Foreign-Device-Table-ACK----------------------------------
@@ -187,7 +187,7 @@ type Read_Foreign_Device_Table(is_orig: bool) = record {
 type Read_Foreign_Device_Table_ACK(is_orig: bool) = record {
     fdt_entries     : FDT_Entry[] &until($input == 0);
 } &let {
-    deliver: bool = $context.flow.process_bacnet_header(is_orig, 0x07, -1, -1, 0, 0);
+    deliver: bool = $context.flow.process_bacnet_apdu_header(is_orig, 0x07, -1, -1, 0, 0);
 };
 
 ## -------------------------------Delete-Foreign-Device-Table-Entry--------------------------------
@@ -203,7 +203,7 @@ type Read_Foreign_Device_Table_ACK(is_orig: bool) = record {
 type Delete_Foreign_Device_Table_Entry(is_orig: bool) = record {
     fdt_entry         : FDT_Entry;
 } &let {
-    deliver: bool = $context.flow.process_bacnet_header(is_orig, 0x08, -1, -1, 0, 0);
+    deliver: bool = $context.flow.process_bacnet_apdu_header(is_orig, 0x08, -1, -1, 0, 0);
 };
 
 ## --------------------------------Distribute-Broadcast-to-Network---------------------------------
@@ -258,7 +258,7 @@ type Original_Broadcast_NPDU(is_orig: bool) = record {
 type Secure_BVLL(is_orig: bool) = record {
     data             : bytestring &restofdata;
 } &let {
-    deliver: bool = $context.flow.process_bacnet_header(is_orig, 0x0C, -1, -1, 0, 0);
+    deliver: bool = $context.flow.process_bacnet_apdu_header(is_orig, 0x0C, -1, -1, 0, 0);
 };
 
 ## -------------------------------------------BDT-Entry--------------------------------------------
@@ -340,6 +340,10 @@ type FDT_Entry = record {
 type NPDU_Header(is_orig: bool, bvlc_function: uint8) = record {
     protocol_version    : uint8 &enforce(protocol_version == 0x01);
     npdu_control        : uint8;
+    npdu_message        : case ((npdu_control & 0x80) >> 7) of {
+        1       -> npdu_message_exists: NPDU_Message(is_orig, bvlc_function);
+        default -> no_npdu_message:     empty;
+    };
     destination         : case ((npdu_control & 0x20) >> 5) of {
         1       -> destination_exists:  NPDU_Destination;
         default -> no_destination:      empty;
@@ -352,8 +356,25 @@ type NPDU_Header(is_orig: bool, bvlc_function: uint8) = record {
         1       -> hop_count_value:     uint8;
         default -> no_hop_count:        empty;
     };
-    apdu                : APDU_Header(is_orig, bvlc_function);
+    apdu                : case ((npdu_control & 0x80) >> 7) of {
+        1       -> no_apdu:             bytestring &restofdata;
+        default -> apdu_exists:         APDU_Header(is_orig, bvlc_function);
+    };
 }
+
+## ------------------------------------------NPDU-Message------------------------------------------
+## Message Description:
+##      Network Layer Protocol Messages
+## Message Format:
+##      - NPDU Message Type:           1 byte   -> Message Type (see npdu_message_types in consts.zeek)
+## Protocol Parsing:
+##      Logs BVLC Function and NPDU Message Type to bacnet.log
+## ------------------------------------------------------------------------------------------------
+type NPDU_Message(is_orig: bool, bvlc_function: uint8) = record {
+    npdu_message_type   : uint8;
+} &let {
+    overview: bool = $context.flow.process_bacnet_npdu_header(is_orig, bvlc_function, npdu_message_type);
+};
 
 ## ----------------------------------------NPDU-Destination----------------------------------------
 ## Message Description:
@@ -526,7 +547,7 @@ type Confirmed_Request_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: uint
         default                         -> false;
     };
     pdu_type: uint8 = choice_tag >> 4;
-    overview: bool = $context.flow.process_bacnet_header(is_orig, bvlc_function, pdu_type, service_choice, invoke_id, 0);
+    overview: bool = $context.flow.process_bacnet_apdu_header(is_orig, bvlc_function, pdu_type, service_choice, invoke_id, 0);
 };
 
 ## ------------------------------------Unconfirmed-Request-PDU-------------------------------------
@@ -565,7 +586,7 @@ type Unconfirmed_Request_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: ui
         default -> false;
     };
     pdu_type: uint8 = choice_tag >> 4;
-    overview: bool = $context.flow.process_bacnet_header(is_orig, bvlc_function, pdu_type, service_choice, 0, 0);
+    overview: bool = $context.flow.process_bacnet_apdu_header(is_orig, bvlc_function, pdu_type, service_choice, 0, 0);
 };
 
 ## -----------------------------------------Simple-ACK-PDU-----------------------------------------
@@ -589,7 +610,7 @@ type Simple_ACK_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: uint8) = re
     service_choice  : uint8 &enforce(service_choice <= 0x1d);
 } &let {
     pdu_type: uint8 = choice_tag >> 4;
-    overview: bool = $context.flow.process_bacnet_header(is_orig, bvlc_function, pdu_type, service_choice, invoke_id, 0);
+    overview: bool = $context.flow.process_bacnet_apdu_header(is_orig, bvlc_function, pdu_type, service_choice, invoke_id, 0);
 };
 
 ## ----------------------------------------Complex-ACK-PDU-----------------------------------------
@@ -658,7 +679,7 @@ type Complex_ACK_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: uint8)   =
         default                         -> false;
     };
     pdu_type: uint8 = choice_tag >> 4;
-    overview: bool = $context.flow.process_bacnet_header(is_orig, bvlc_function, pdu_type, service_choice, invoke_id, 0);
+    overview: bool = $context.flow.process_bacnet_apdu_header(is_orig, bvlc_function, pdu_type, service_choice, invoke_id, 0);
 };
 
 ## ----------------------------------------Segment-ACK-PDU-----------------------------------------
@@ -691,7 +712,7 @@ type Segment_ACK_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: uint8) = r
     actual_window_size  : uint8;
 } &let {
     pdu_type: uint8 = choice_tag >> 4;
-    overview: bool = $context.flow.process_bacnet_header(is_orig, bvlc_function, pdu_type, -1, invoke_id, 0);
+    overview: bool = $context.flow.process_bacnet_apdu_header(is_orig, bvlc_function, pdu_type, -1, invoke_id, 0);
 };
 
 ## -------------------------------------------Error-PDU--------------------------------------------
@@ -720,7 +741,7 @@ type Error_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: uint8) = record 
     error_code      : BACnet_Tag;
 } &let {
     pdu_type: uint8 = choice_tag >> 4;
-    overview: bool = $context.flow.process_bacnet_header(is_orig, bvlc_function, pdu_type, service_choice, invoke_id, error_code.tag_data[0]);
+    overview: bool = $context.flow.process_bacnet_apdu_header(is_orig, bvlc_function, pdu_type, service_choice, invoke_id, error_code.tag_data[0]);
 };
 
 ## -------------------------------------------Reject-PDU-------------------------------------------
@@ -744,7 +765,7 @@ type Reject_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: uint8) = record
     reject_reason   : uint8;
 } &let {
     pdu_type: uint8 = choice_tag >> 4;
-    overview: bool = $context.flow.process_bacnet_header(is_orig, bvlc_function, pdu_type, -1, invoke_id, reject_reason);
+    overview: bool = $context.flow.process_bacnet_apdu_header(is_orig, bvlc_function, pdu_type, -1, invoke_id, reject_reason);
 };
 
 ## -------------------------------------------Abort-PDU--------------------------------------------
@@ -769,7 +790,7 @@ type Abort_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: uint8) = record 
     abort_reason    : uint8;
 } &let {
     pdu_type: uint8 = choice_tag >> 4;
-    overview: bool = $context.flow.process_bacnet_header(is_orig, bvlc_function, pdu_type, -1, invoke_id, abort_reason);
+    overview: bool = $context.flow.process_bacnet_apdu_header(is_orig, bvlc_function, pdu_type, -1, invoke_id, abort_reason);
 };
 
 ###################################################################################################

@@ -257,11 +257,11 @@ refine flow BACNET_Flow += {
     ##################################### GENERAL BACNET MESSAGE ######################################
     ###################################################################################################
 
-    ## -------------------------------------process_bacnet_message-------------------------------------
-    ## General BACnet Message Description:
-    ##      This is the default message being logged by the parser to bacnet.log. Each BACnet packet
-    ##      will create this message.
-    ## General BACnet Message Event Generation:
+    ## -----------------------------------process_bacnet_apdu_header-----------------------------------
+    ## General BACnet APDU Message Description:
+    ##      This is the default message being logged by the parser to bacnet.log for APDU packets. 
+    ##      Each BACnet APDU packet will create this message.
+    ## General BACnet APDU Message Event Generation:
     ##      - bvlc_function     -> BVLC Function
     ##          + Matches bvlc_functions in consts.zeek
     ##      - pdu_type          -> APDU Type
@@ -274,18 +274,18 @@ refine flow BACNET_Flow += {
     ##      - result_code       -> Error Code or Reject/Abort Reason
     ##          + Matches error_codes, reject_reasons, or abort_reasons in consts.zeek
     ## ------------------------------------------------------------------------------------------------
-    function process_bacnet_header(is_orig: bool, bvlc_function: uint8, pdu_type: int8, pdu_service: int8, invoke_id: uint8, result_code: int8): bool
+    function process_bacnet_apdu_header(is_orig: bool, bvlc_function: uint8, pdu_type: int8, pdu_service: int8, invoke_id: uint8, result_code: int8): bool
         %{
-            if ( ::bacnet_header )
+            if ( ::bacnet_apdu_header )
             {
-                zeek::BifEvent::enqueue_bacnet_header(connection()->zeek_analyzer(),
-                                                      connection()->zeek_analyzer()->Conn(),
-                                                      is_orig,
-                                                      bvlc_function,
-                                                      pdu_type,
-                                                      pdu_service,
-                                                      invoke_id,
-                                                      result_code);
+                zeek::BifEvent::enqueue_bacnet_apdu_header(connection()->zeek_analyzer(),
+                                                           connection()->zeek_analyzer()->Conn(),
+                                                           is_orig,
+                                                           bvlc_function,
+                                                           pdu_type,
+                                                           pdu_service,
+                                                           invoke_id,
+                                                           result_code);
             }
             if( ::bacnet_property_error && pdu_type == ERROR_PDU )
             {
@@ -298,6 +298,29 @@ refine flow BACNET_Flow += {
                                                                   pdu_service,
                                                                   result_code);
                 }
+            }
+            return true;
+        %}
+
+    ## -----------------------------------process_bacnet_npdu_header-----------------------------------
+    ## General BACnet NPDU Message Description:
+    ##      This is the default message being logged by the parser to bacnet.log for NPDU packets. 
+    ##      Each BACnet NPDU packet will create this message.
+    ## General BACnet NPDU Message Event Generation:
+    ##      - bvlc_function     -> BVLC Function
+    ##          + Matches bvlc_functions in consts.zeek
+    ##      - npdu_message_type -> NPDU Message Type
+    ##          + Matches npdu_message_types in consts.zeek
+    ## ------------------------------------------------------------------------------------------------
+    function process_bacnet_npdu_header(is_orig: bool, bvlc_function: uint8, npdu_message_type: int8): bool
+        %{
+            if ( ::bacnet_npdu_header )
+            {
+                zeek::BifEvent::enqueue_bacnet_npdu_header(connection()->zeek_analyzer(),
+                                                           connection()->zeek_analyzer()->Conn(),
+                                                           is_orig,
+                                                           bvlc_function,
+                                                           npdu_message_type);
             }
             return true;
         %}

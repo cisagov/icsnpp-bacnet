@@ -100,15 +100,15 @@ function set_service(c: connection) {
 }
 
 ###################################################################################################
-#####################  Defines logging of bacnet_header event -> bacnet.log  ######################
+###################  Defines logging of bacnet_apdu_header event -> bacnet.log  ###################
 ###################################################################################################
-event bacnet_header(c: connection,
-                    is_orig: bool,
-                    bvlc_function: count,
-                    pdu_type: count,
-                    pdu_service: count,
-                    invoke_id: count,
-                    result_code: count){
+event bacnet_apdu_header(c: connection,
+                         is_orig: bool,
+                         bvlc_function: count,
+                         pdu_type: count,
+                         pdu_service: count,
+                         invoke_id: count,
+                         result_code: count){
 
     set_service(c);
     local bacnet_log: BACnet_Header;
@@ -154,6 +154,29 @@ event bacnet_header(c: connection,
         default:
             break;
     }
+
+    Log::write(LOG_BACNET, bacnet_log);
+}
+
+###################################################################################################
+###################  Defines logging of bacnet_npdu_header event -> bacnet.log  ###################
+###################################################################################################
+event bacnet_npdu_header(c: connection,
+                         is_orig: bool,
+                         bvlc_function: count,
+                         npdu_message_type: count){
+
+    set_service(c);
+    local bacnet_log: BACnet_Header;
+    bacnet_log$is_orig = is_orig;
+    bacnet_log$ts  = network_time();
+    bacnet_log$uid = c$uid;
+    bacnet_log$id  = c$id;
+
+    bacnet_log$bvlc_function = bvlc_functions[bvlc_function];
+
+    bacnet_log$pdu_type = "NPDU";
+    bacnet_log$pdu_service = npdu_message_types[npdu_message_type];
 
     Log::write(LOG_BACNET, bacnet_log);
 }
