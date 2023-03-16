@@ -138,8 +138,6 @@ event bacnet_apdu_header(c: connection,
         case 2:
             fallthrough;
         case 3:
-            fallthrough;
-        case 4:
             bacnet_log$pdu_service = confirmed_service_choice[pdu_service];
             break;
         case 1:
