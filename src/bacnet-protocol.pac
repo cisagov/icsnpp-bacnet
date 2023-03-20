@@ -367,13 +367,15 @@ type NPDU_Header(is_orig: bool, bvlc_function: uint8) = record {
 ##      Network Layer Protocol Messages
 ## Message Format:
 ##      - NPDU Message Type:           1 byte   -> Message Type (see npdu_message_types in consts.zeek)
+##      - Destination Network Address  2 bytes  -> NPDU Destination Network Address
 ## Protocol Parsing:
-##      Logs BVLC Function and NPDU Message Type to bacnet.log
+##      Logs BVLC Function, NPDU Message Type, and Destination Network Address to bacnet.log
 ## ------------------------------------------------------------------------------------------------
 type NPDU_Message(is_orig: bool, bvlc_function: uint8) = record {
     npdu_message_type   : uint8;
+    destination_address : uint16;
 } &let {
-    overview: bool = $context.flow.process_bacnet_npdu_header(is_orig, bvlc_function, npdu_message_type);
+    overview: bool = $context.flow.process_bacnet_npdu_header(is_orig, bvlc_function, npdu_message_type, destination_address);
 };
 
 ## ----------------------------------------NPDU-Destination----------------------------------------

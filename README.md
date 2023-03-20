@@ -110,7 +110,7 @@ This log captures BACnet header information for every BACnet/IP packet and logs 
 | bvlc_function | string    | BVLC function                                             |
 | pdu_type      | string    | static "NPDU" string                                      |
 | pdu_service   | string    | NPDU message type                                         |
-| invoke_id     | count     | N/A                                                       |
+| invoke_id     | count     | NPDU destination network address                          |
 | result_code   | string    | N/A                                                       |
 
 ### Discovery Log (bacnet_discovery.log)

@@ -236,6 +236,8 @@ export {
         [0x0f] = "update_distribution_key",
         [0x10] = "request_master_key",
         [0x11] = "set_master_key",
+        [0x12] = "what_is_networknumber",
+        [0x13] = "networknumber_is",
     } &default = function(n: count): string {return fmt("Unknown NPDU Type-0x%02x", n); };
 
     ###############################################################################################

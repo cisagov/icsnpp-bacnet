@@ -307,12 +307,14 @@ refine flow BACNET_Flow += {
     ##      This is the default message being logged by the parser to bacnet.log for NPDU packets. 
     ##      Each BACnet NPDU packet will create this message.
     ## General BACnet NPDU Message Event Generation:
-    ##      - bvlc_function     -> BVLC Function
+    ##      - bvlc_function       -> BVLC Function
     ##          + Matches bvlc_functions in consts.zeek
-    ##      - npdu_message_type -> NPDU Message Type
+    ##      - npdu_message_type   -> NPDU Message Type
     ##          + Matches npdu_message_types in consts.zeek
+    ##      - destination_address -> NPDU Destination Network Address
+    ##          + destination network address for NPDU packet
     ## ------------------------------------------------------------------------------------------------
-    function process_bacnet_npdu_header(is_orig: bool, bvlc_function: uint8, npdu_message_type: int8): bool
+    function process_bacnet_npdu_header(is_orig: bool, bvlc_function: uint8, npdu_message_type: uint8, destination_address: uint16): bool
         %{
             if ( ::bacnet_npdu_header )
             {
@@ -320,7 +322,8 @@ refine flow BACNET_Flow += {
                                                            connection()->zeek_analyzer()->Conn(),
                                                            is_orig,
                                                            bvlc_function,
-                                                           npdu_message_type);
+                                                           npdu_message_type,
+                                                           destination_address);
             }
             return true;
         %}
