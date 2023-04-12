@@ -3,6 +3,12 @@
 #ifndef ANALYZER_PROTOCOL_BACNET_BACNET_H
 #define ANALYZER_PROTOCOL_BACNET_BACNET_H
 
+#if __has_include(<zeek/zeek-version.h>)
+#include <zeek/zeek-version.h>
+#else
+#include <zeek/zeek-config.h>
+#endif
+
 #include "events.bif.h"
 
 #if ZEEK_VERSION_NUMBER >= 40100
