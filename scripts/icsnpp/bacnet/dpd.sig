@@ -1,5 +1,7 @@
 signature bacnet_dpd {
   ip-proto == udp
-  payload /\x81[\x00-x0b]/
+  src-port == 1024-65535
+  dst-port == 1024-65535
+  payload /\x81[\x0a\x0b]..\x01/
   enable "bacnet"
 }
