@@ -83,9 +83,9 @@ tar xvzf build/ICSNPP_Bacnet.tgz -C $ZEEK_PLUGIN_PATH
 
 #### Overview
 
-This log captures BACnet header information for every BACnet/IP packet and logs it to **bacnet.log**.
+This log captures BACnet header information for every BACnet/IP packet and logs it to **bacnet.log**. BACnet has two different protocol data layer messages (PDUs) - Application Protocol Data Unit (APDU) and Network Protocol Data Unit (NPDU). Both APDU and NPDU messages are logged to bacnet.log, but fields captured and logged are slightly different as seen below.
 
-#### Fields Captured
+#### Fields Captured (BACnet-APDU Packets)
 
 | Field         | Type      | Description                                               |
 | ------------- |-----------|-----------------------------------------------------------| 
@@ -98,6 +98,20 @@ This log captures BACnet header information for every BACnet/IP packet and logs 
 | pdu_service   | string    | APDU service choice                                       |
 | invoke_id     | count     | Unique ID for all outstanding confirmed request/ACK APDUs |
 | result_code   | string    | Error code or reject/abort reason                         |
+
+#### Fields Captured (BACnet-NPDU Packets)
+
+| Field         | Type      | Description                                               |
+| ------------- |-----------|-----------------------------------------------------------| 
+| ts            | time      | Timestamp                                                 |
+| uid           | string    | Unique ID for this connection                             |
+| id            | conn_id   | Default Zeek connection info (IP addresses, ports)        |
+| is_orig       | bool      | True if the packet is sent from the originator            |
+| bvlc_function | string    | BVLC function                                             |
+| pdu_type      | string    | static "NPDU" string                                      |
+| pdu_service   | string    | NPDU message type                                         |
+| invoke_id     | count     | NPDU destination network address                          |
+| result_code   | string    | N/A                                                       |
 
 ### Discovery Log (bacnet_discovery.log)
 
@@ -147,18 +161,20 @@ BACnet contains two messages for sending and receiving files: Atomic-Read-File a
 
 ## Troubleshooting
 
-By default, this BACnet parser will only produce BACnet log files on BACnet traffic to UDP port 47808. If you have BACnet traffic operating on a port other than UDP/47808, you can remove the `#` in the first line of [scripts/icsnpp/bacnet/\_\_load\_\_.zeek](scripts/icsnpp/bacnet/__load__.zeek). However, this may produce false positives as other UDP traffic such as DNS can produce similar packets to some of the simpler/smaller BACnet functions.
+By default, this BACnet parser uses a Zeek DPD signature to detect BACnet traffic. If you are seeing false positives in your BACnet logs and your BACnet traffic is operating on UDP port 47808 you can disable this DPD signature by removing or commenting-out the first line of [scripts/icsnpp/bacnet/\_\_load\_\_.zeek](scripts/icsnpp/bacnet/__load__.zeek).
 
-Default configuration, only parses BACnet traffic on UDP/47808
-```bash
-# @load-sigs ./dpd.sig
-@load ./main
-```
-
-Modified configuration, parses BACnet traffic on all UDP ports, but may produce false positives
+Default configuration, parses BACnet traffic on all UDP ports, but may produce false positives
 ```bash
 @load-sigs ./dpd.sig
 @load ./main
+@load ./files
+```
+
+Modified configuration, only parses BACnet traffic on UDP/47808
+```bash
+# @load-sigs ./dpd.sig
+@load ./main
+@load ./files
 ```
 
 ## ICSNPP Packages

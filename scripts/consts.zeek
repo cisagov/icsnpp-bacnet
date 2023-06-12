@@ -215,6 +215,32 @@ export {
     } &default = function(n: count): string {return fmt("Unknown Error Code-0x%02x", n); };
 
     ###############################################################################################
+    #####################################  NPDU Message Types  ####################################
+    ###############################################################################################
+    const npdu_message_types: table[count] of string = {
+        [0x00] = "who_is_router_to_network",
+        [0x01] = "i_am_router_to_network",
+        [0x02] = "i_could_be_router_to_network",
+        [0x03] = "reject_message_to_network",
+        [0x04] = "router_busy_to_network",
+        [0x05] = "router_available_to_network",
+        [0x06] = "initialize_routing_table",
+        [0x07] = "initialize_routing_table_ack",
+        [0x08] = "establish_connection_to_network",
+        [0x09] = "disconnect_connection_to_network",
+        [0x0a] = "challenge_request",
+        [0x0b] = "security_payload",
+        [0x0c] = "security_response",
+        [0x0d] = "request_key_update",
+        [0x0e] = "update_key_set",
+        [0x0f] = "update_distribution_key",
+        [0x10] = "request_master_key",
+        [0x11] = "set_master_key",
+        [0x12] = "what_is_networknumber",
+        [0x13] = "networknumber_is",
+    } &default = function(n: count): string {return fmt("Unknown NPDU Type-0x%02x", n); };
+
+    ###############################################################################################
     ########################################  APDU Types  #########################################
     ###############################################################################################
     const apdu_types: table[count] of string = {
