@@ -149,6 +149,7 @@ This log captures important variables for Read-Property-Request, Read-Property-A
 | uid               | string    | Unique ID for this connection                             |
 | id                | conn_id   | Default Zeek connection info (IP addresses, ports)        |
 | is_orig           | bool      | True if the message is sent from the originator           |
+| invoke_id         | count     | Unique ID for all outstanding confirmed request/ACK APDUs                  |
 | pdu_service       | string    | APDU service choice (read or write property services)     |
 | object_type       | string    | BACnet device's object type                               |
 | instance_number   | count     | BACnet device's instance number                           |

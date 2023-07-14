@@ -58,6 +58,7 @@ export {
         uid                     : string    &log;   # Zeek unique ID for connection
         id                      : conn_id   &log;   # Zeek connection struct (addresses and ports)
         is_orig                 : bool      &log;   # the message came from the originator/client or the responder/server
+        invoke_id               : count     &log;   # invoke ID for help matching requests/responses
         pdu_service             : string    &log;   # read-property-request/ack, write-property-request
         object_type             : string    &log;   # BACnetObjectIdentifier object (see object_types)
         instance_number         : count     &log;   # BACnetObjectIdentifier instance number
@@ -331,6 +332,7 @@ event bacnet_i_have(c: connection,
 ###################################################################################################
 event bacnet_read_property(c: connection,
                            is_orig: bool,
+                           invoke_id: count,
                            pdu_service: string,
                            object_type: count,
                            instance_number: count,
@@ -343,6 +345,7 @@ event bacnet_read_property(c: connection,
     bacnet_property$ts  = network_time();
     bacnet_property$uid = c$uid;
     bacnet_property$id  = c$id;
+    bacnet_property$invoke_id  = invoke_id;
 
     bacnet_property$pdu_service = pdu_service;
     bacnet_property$object_type = object_types[object_type];
@@ -360,6 +363,7 @@ event bacnet_read_property(c: connection,
 ###################################################################################################
 event bacnet_read_property_ack(c: connection,
                                is_orig: bool,
+                               invoke_id: count,
                                pdu_service: string,
                                object_type: count,
                                instance_number: count,
@@ -373,6 +377,7 @@ event bacnet_read_property_ack(c: connection,
     bacnet_property$ts  = network_time();
     bacnet_property$uid = c$uid;
     bacnet_property$id  = c$id;
+    bacnet_property$invoke_id  = invoke_id;
 
     bacnet_property$pdu_service = pdu_service;
     bacnet_property$object_type = object_types[object_type];
@@ -425,6 +430,7 @@ event bacnet_read_property_ack(c: connection,
 ###################################################################################################
 event bacnet_write_property(c: connection,
                             is_orig: bool,
+                            invoke_id: count,
                             object_type: count,
                             instance_number: count,
                             property_identifier: count,
@@ -438,6 +444,7 @@ event bacnet_write_property(c: connection,
     bacnet_property$ts  = network_time();
     bacnet_property$uid = c$uid;
     bacnet_property$id  = c$id;
+    bacnet_property$invoke_id  = invoke_id;
 
     bacnet_property$pdu_service = "write-property";
     bacnet_property$object_type = object_types[object_type];
@@ -490,6 +497,7 @@ event bacnet_write_property(c: connection,
 ###################################################################################################
 event bacnet_property_error(c: connection,
                             is_orig: bool,
+                            invoke_id: count,
                             pdu_type: count,
                             pdu_service: count,
                             result_code: count){
@@ -500,6 +508,7 @@ event bacnet_property_error(c: connection,
     bacnet_property$ts  = network_time();
     bacnet_property$uid = c$uid;
     bacnet_property$id  = c$id;
+    bacnet_property$invoke_id  = invoke_id;
 
     bacnet_property$pdu_service = "ERROR: " + confirmed_service_choice[pdu_service];
     bacnet_property$object_type = error_codes[result_code];
@@ -509,6 +518,7 @@ event bacnet_property_error(c: connection,
 
 event bacnet_read_range(c: connection,
                         is_orig: bool,
+                        invoke_id: count,
                         object_type: count,
                         instance_number: count,
                         property_identifier: count,
@@ -520,6 +530,7 @@ event bacnet_read_range(c: connection,
     bacnet_property$ts  = network_time();
     bacnet_property$uid = c$uid;
     bacnet_property$id  = c$id;
+    bacnet_property$invoke_id  = invoke_id;
 
     bacnet_property$pdu_service = "read-range-request";
     bacnet_property$object_type = object_types[object_type];
@@ -534,6 +545,7 @@ event bacnet_read_range(c: connection,
 
 event bacnet_read_range_ack(c: connection,
                             is_orig: bool,
+                            invoke_id: count,
                             object_type: count,
                             instance_number: count,
                             property_identifier: count,
@@ -547,6 +559,7 @@ event bacnet_read_range_ack(c: connection,
     bacnet_property$ts  = network_time();
     bacnet_property$uid = c$uid;
     bacnet_property$id  = c$id;
+    bacnet_property$invoke_id  = invoke_id;
 
     bacnet_property$pdu_service = "read-range-ack";
     bacnet_property$object_type = object_types[object_type];

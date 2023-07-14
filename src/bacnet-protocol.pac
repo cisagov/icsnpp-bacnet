@@ -516,36 +516,36 @@ type Confirmed_Request_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: uint
     service_request_tags    : BACnet_Tag[] &until($input == 0);
 } &let {
     deliver: bool = case service_choice of {
-        ACKNOWLEDGE_ALARM               -> $context.flow.process_acknowledge_alarm(is_orig, service_request_tags);
-        CONFIRMED_COV_NOTIFICATION      -> $context.flow.process_confirmed_cov_notification(is_orig, service_request_tags);
-        CONFIRMED_EVENT_NOTIFICATION    -> $context.flow.process_confirmed_event_notification(is_orig, service_request_tags);
-        GET_ALARM_SUMMARY               -> $context.flow.process_get_alarm_summary(is_orig, service_request_tags);
-        GET_ENROLLMENT_SUMMARY          -> $context.flow.process_get_enrollment_summary(is_orig, service_request_tags);
-        SUBSCRIBE_COV                   -> $context.flow.process_subscribe_cov(is_orig, service_request_tags);
-        ATOMIC_READ_FILE                -> $context.flow.process_atomic_read_file(is_orig, service_request_tags);
-        ATOMIC_WRITE_FILE               -> $context.flow.process_atomic_write_file(is_orig, service_request_tags);
-        ADD_LIST_ELEMENT                -> $context.flow.process_add_list_element(is_orig, service_request_tags);
-        REMOVE_LIST_ELEMENT             -> $context.flow.process_remove_list_element(is_orig, service_request_tags);
-        CREATE_OBJECT                   -> $context.flow.process_create_object(is_orig, service_request_tags);
-        DELETE_OBJECT                   -> $context.flow.process_delete_object(is_orig, service_request_tags);
-        READ_PROPERTY                   -> $context.flow.process_read_property(is_orig, service_request_tags);
+        ACKNOWLEDGE_ALARM               -> $context.flow.process_acknowledge_alarm(is_orig, invoke_id, service_request_tags);
+        CONFIRMED_COV_NOTIFICATION      -> $context.flow.process_confirmed_cov_notification(is_orig, invoke_id, service_request_tags);
+        CONFIRMED_EVENT_NOTIFICATION    -> $context.flow.process_confirmed_event_notification(is_orig, invoke_id, service_request_tags);
+        GET_ALARM_SUMMARY               -> $context.flow.process_get_alarm_summary(is_orig, invoke_id, service_request_tags);
+        GET_ENROLLMENT_SUMMARY          -> $context.flow.process_get_enrollment_summary(is_orig, invoke_id, service_request_tags);
+        SUBSCRIBE_COV                   -> $context.flow.process_subscribe_cov(is_orig, invoke_id, service_request_tags);
+        ATOMIC_READ_FILE                -> $context.flow.process_atomic_read_file(is_orig, invoke_id, service_request_tags);
+        ATOMIC_WRITE_FILE               -> $context.flow.process_atomic_write_file(is_orig, invoke_id, service_request_tags);
+        ADD_LIST_ELEMENT                -> $context.flow.process_add_list_element(is_orig, invoke_id, service_request_tags);
+        REMOVE_LIST_ELEMENT             -> $context.flow.process_remove_list_element(is_orig, invoke_id, service_request_tags);
+        CREATE_OBJECT                   -> $context.flow.process_create_object(is_orig, invoke_id, service_request_tags);
+        DELETE_OBJECT                   -> $context.flow.process_delete_object(is_orig, invoke_id, service_request_tags);
+        READ_PROPERTY                   -> $context.flow.process_read_property(is_orig, invoke_id, service_request_tags);
         READ_PROPERTY_CONDITIONAL       -> false; # Removed in Version 1 Revision 12
-        READ_PROPERTY_MULTIPLE          -> $context.flow.process_read_property_multiple(is_orig, service_request_tags);
-        WRITE_PROPERTY                  -> $context.flow.process_write_property(is_orig, service_request_tags);
-        WRITE_PROPERTY_MULTIPLE         -> $context.flow.process_write_property_multiple(is_orig, service_request_tags);
+        READ_PROPERTY_MULTIPLE          -> $context.flow.process_read_property_multiple(is_orig, invoke_id, service_request_tags);
+        WRITE_PROPERTY                  -> $context.flow.process_write_property(is_orig, invoke_id, service_request_tags);
+        WRITE_PROPERTY_MULTIPLE         -> $context.flow.process_write_property_multiple(is_orig, invoke_id, service_request_tags);
         DEVICE_COMMUNICATION_CONTROL    -> $context.flow.process_device_communication_control(is_orig, invoke_id, service_request_tags);
-        CONFIRMED_PRIVATE_TRANSFER      -> $context.flow.process_confirmed_private_transfer(is_orig, service_request_tags);
-        CONFIRMED_TEXT_MESSAGE          -> $context.flow.process_confirmed_text_message(is_orig, service_request_tags);
+        CONFIRMED_PRIVATE_TRANSFER      -> $context.flow.process_confirmed_private_transfer(is_orig, invoke_id, service_request_tags);
+        CONFIRMED_TEXT_MESSAGE          -> $context.flow.process_confirmed_text_message(is_orig, invoke_id, service_request_tags);
         REINITIALIZE_DEVICE             -> $context.flow.process_reinitialize_device(is_orig, invoke_id, service_request_tags);
-        VT_OPEN                         -> $context.flow.process_vt_open(is_orig, service_request_tags);
-        VT_CLOSE                        -> $context.flow.process_vt_close(is_orig, service_request_tags);
-        VT_DATA                         -> $context.flow.process_vt_data(is_orig, service_request_tags);
+        VT_OPEN                         -> $context.flow.process_vt_open(is_orig, invoke_id, service_request_tags);
+        VT_CLOSE                        -> $context.flow.process_vt_close(is_orig, invoke_id, service_request_tags);
+        VT_DATA                         -> $context.flow.process_vt_data(is_orig, invoke_id, service_request_tags);
         AUTHENTICATE                    -> false; # Removed in Version 1 Revision 11
         REQUEST_KEY                     -> false; # Removed in Version 1 Revision 11
-        READ_RANGE                      -> $context.flow.process_read_range(is_orig, service_request_tags);
-        LIFE_SAFETY_OPERATION           -> $context.flow.process_life_safety_operation(is_orig, service_request_tags);
-        SUBSCRIBE_COV_PROPERTY          -> $context.flow.process_subscribe_cov_property(is_orig, service_request_tags);
-        GET_EVENT_INFORMATION           -> $context.flow.process_get_event_information(is_orig, service_request_tags);
+        READ_RANGE                      -> $context.flow.process_read_range(is_orig, invoke_id, service_request_tags);
+        LIFE_SAFETY_OPERATION           -> $context.flow.process_life_safety_operation(is_orig, invoke_id, service_request_tags);
+        SUBSCRIBE_COV_PROPERTY          -> $context.flow.process_subscribe_cov_property(is_orig, invoke_id, service_request_tags);
+        GET_EVENT_INFORMATION           -> $context.flow.process_get_event_information(is_orig, invoke_id, service_request_tags);
         default                         -> false;
     };
     pdu_type: uint8 = choice_tag >> 4;
@@ -663,21 +663,21 @@ type Complex_ACK_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: uint8)   =
     service_ack_tags    : BACnet_Tag[] &until($input == 0);
 } &let {
     deliver: bool = case service_choice of {
-        GET_ALARM_SUMMARY               -> $context.flow.process_get_alarm_summary_ack(is_orig, service_ack_tags);
-        GET_ENROLLMENT_SUMMARY          -> $context.flow.process_get_enrollment_summary_ack(is_orig, service_ack_tags);
-        ATOMIC_READ_FILE                -> $context.flow.process_atomic_read_file_ack(is_orig, service_ack_tags);
-        ATOMIC_WRITE_FILE               -> $context.flow.process_atomic_write_file_ack(is_orig, service_ack_tags);
-        CREATE_OBJECT                   -> $context.flow.process_create_object_ack(is_orig, service_ack_tags);
-        READ_PROPERTY                   -> $context.flow.process_read_property_ack(is_orig, service_ack_tags);
+        GET_ALARM_SUMMARY               -> $context.flow.process_get_alarm_summary_ack(is_orig, invoke_id, service_ack_tags);
+        GET_ENROLLMENT_SUMMARY          -> $context.flow.process_get_enrollment_summary_ack(is_orig, invoke_id, service_ack_tags);
+        ATOMIC_READ_FILE                -> $context.flow.process_atomic_read_file_ack(is_orig, invoke_id, service_ack_tags);
+        ATOMIC_WRITE_FILE               -> $context.flow.process_atomic_write_file_ack(is_orig, invoke_id, service_ack_tags);
+        CREATE_OBJECT                   -> $context.flow.process_create_object_ack(is_orig, invoke_id, service_ack_tags);
+        READ_PROPERTY                   -> $context.flow.process_read_property_ack(is_orig, invoke_id, service_ack_tags);
         READ_PROPERTY_CONDITIONAL       -> false; # Removed in Version 1 Revision 12
-        READ_PROPERTY_MULTIPLE          -> $context.flow.process_read_property_multiple_ack(is_orig, service_ack_tags);
-        CONFIRMED_PRIVATE_TRANSFER      -> $context.flow.process_confirmed_private_transfer_ack(is_orig, service_ack_tags);
-        VT_OPEN                         -> $context.flow.process_vt_open_ack(is_orig, service_ack_tags);
-        VT_DATA                         -> $context.flow.process_vt_data_ack(is_orig, service_ack_tags);
+        READ_PROPERTY_MULTIPLE          -> $context.flow.process_read_property_multiple_ack(is_orig, invoke_id, service_ack_tags);
+        CONFIRMED_PRIVATE_TRANSFER      -> $context.flow.process_confirmed_private_transfer_ack(is_orig, invoke_id, service_ack_tags);
+        VT_OPEN                         -> $context.flow.process_vt_open_ack(is_orig, invoke_id, service_ack_tags);
+        VT_DATA                         -> $context.flow.process_vt_data_ack(is_orig, invoke_id, service_ack_tags);
         AUTHENTICATE                    -> false; # Removed in Version 1 Revision 11
         REQUEST_KEY                     -> false; # Removed in Version 1 Revision 11
-        READ_RANGE                      -> $context.flow.process_read_range_ack(is_orig, service_ack_tags);
-        GET_EVENT_INFORMATION           -> $context.flow.process_get_event_information_ack(is_orig, service_ack_tags);
+        READ_RANGE                      -> $context.flow.process_read_range_ack(is_orig, invoke_id, service_ack_tags);
+        GET_EVENT_INFORMATION           -> $context.flow.process_get_event_information_ack(is_orig, invoke_id, service_ack_tags);
         default                         -> false;
     };
     pdu_type: uint8 = choice_tag >> 4;
