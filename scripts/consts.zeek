@@ -2231,4 +2231,27 @@ export {
         [47815] = "millirems-per-hour",
     } &default = function(n: count): string {return fmt("Unknown Unit-%d", n); };
 
+    ###############################################################################################
+    #############################  BACnet Reinitialize Device States  #############################
+    ###############################################################################################
+    const reinitialize_device_states: table[count] of string = {
+        [0] = "coldstart",
+        [1] = "warmstart",
+        [2] = "start-backup",
+        [3] = "end-backup",
+        [4] = "start-restore",
+        [5] = "end-restore",
+        [6] = "abort-restore",
+        [7] = "activate-changes",
+    } &default = function(n: count): string {return fmt("Unknown Device State Type-0x%02x", n); };
+
+    ###############################################################################################
+    #########################  BACnet Device Communication Control States  ########################
+    ###############################################################################################
+    const device_communication_control_states: table[count] of string = {
+        [0] = "enable",
+        [1] = "disable",
+        [2] = "disable-initiation",
+    } &default = function(n: count): string {return fmt("Unknown Device State Type-0x%02x", n); };
+
 }

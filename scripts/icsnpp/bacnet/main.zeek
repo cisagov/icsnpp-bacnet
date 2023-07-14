@@ -13,7 +13,8 @@ module Bacnet;
 export {
     redef enum Log::ID += { LOG_BACNET,
                             LOG_BACNET_DISCOVERY,
-                            LOG_BACNET_PROPERTY};
+                            LOG_BACNET_PROPERTY,
+                            LOG_BACNET_DEVICE_CONTROL};
 
     ###############################################################################################
     ################################  BACnet_Header -> bacnet.log  ################################
@@ -66,6 +67,24 @@ export {
     };
     global log_bacnet_property: event(rec: BACnet_Property);
 
+    ###############################################################################################
+    ########  Reinitialized-Device & Device-Communication-Control -> bacnet_property.log  #########
+    ###############################################################################################
+    type BACnet_Device_Control: record {
+        ts                      : time      &log;   # Timestamp of event
+        uid                     : string    &log;   # Zeek unique ID for connection
+        id                      : conn_id   &log;   # Zeek connection struct (addresses and ports)
+        is_orig                 : bool      &log;   # the message came from the originator/client or the responder/server
+        invoke_id               : count     &log;   # invoke ID for help matching requests/responses
+        pdu_service             : string    &log;   # reinitialized_device or device_communication_control
+        time_duration           : count     &log;   # number of minutes remote device should ignore other APDUs
+        device_state            : string    &log;   # state to put device into
+        password                : string    &log;   # password
+        result                  : string    &log;   # Success, Error, Reject, or Abort
+        result_code             : string    &log;   # resulting Error/Reject/Abort Code
+    };
+    global log_bacnet_device_control: event(rec: BACnet_Device_Control);
+
 }
 
 ## Defines BACnet Ports
@@ -87,6 +106,10 @@ event zeek_init() &priority=5{
     Log::create_stream(Bacnet::LOG_BACNET_PROPERTY, [$columns=BACnet_Property,
                                                      $ev=log_bacnet_property,
                                                      $path="bacnet_property"]);
+
+    Log::create_stream(Bacnet::LOG_BACNET_DEVICE_CONTROL, [$columns=BACnet_Device_Control,
+                                                     $ev=log_bacnet_device_control,
+                                                     $path="bacnet_device_control"]);
 
     Analyzer::register_for_ports(Analyzer::ANALYZER_BACNET, ports);
 }
@@ -536,4 +559,98 @@ event bacnet_read_range_ack(c: connection,
     bacnet_property$value = fmt("item_count: %d",item_count);
 
     Log::write(LOG_BACNET_PROPERTY, bacnet_property);
+}
+
+###################################################################################################
+#######  Defines logging of bacnet_reinitialize_device event -> bacnet_device_control.log  ########
+###################################################################################################
+event bacnet_reinitialize_device(c: connection,
+                                 is_orig: bool,
+                                 invoke_id: count,
+                                 reinitialized_state: count,
+                                 password: string){
+
+    set_service(c);
+    local bacnet_device_control: BACnet_Device_Control;
+    bacnet_device_control$is_orig = is_orig;
+    bacnet_device_control$ts  = network_time();
+    bacnet_device_control$uid = c$uid;
+    bacnet_device_control$id  = c$id;
+
+    bacnet_device_control$invoke_id = invoke_id;
+    bacnet_device_control$pdu_service = "reinitialized_device";
+    bacnet_device_control$device_state = reinitialize_device_states[reinitialized_state];
+    bacnet_device_control$password = password;
+    
+    Log::write(LOG_BACNET_DEVICE_CONTROL, bacnet_device_control);
+}
+
+###################################################################################################
+########  Defines logging of bacnet_device_control_response event -> bacnet_device_control.log  #####
+###################################################################################################
+event bacnet_device_control_response(c: connection,
+                                     is_orig: bool,
+                                     invoke_id: count,
+                                     pdu_service: count,
+                                     pdu_type: count,
+                                     result_code: count){
+
+    set_service(c);
+    local bacnet_device_control: BACnet_Device_Control;
+    bacnet_device_control$is_orig = is_orig;
+    bacnet_device_control$ts  = network_time();
+    bacnet_device_control$uid = c$uid;
+    bacnet_device_control$id  = c$id;
+
+    bacnet_device_control$invoke_id = invoke_id;
+    bacnet_device_control$pdu_service = confirmed_service_choice[pdu_service];
+
+    switch(pdu_type){
+        case 2:
+            bacnet_device_control$result = "SUCCESS";
+            break;
+        case 5:
+            bacnet_device_control$result = "ERROR";
+            bacnet_device_control$result_code = error_codes[result_code];
+            break;
+        case 6:
+            bacnet_device_control$result = "REJECT";
+            bacnet_device_control$result_code = reject_reasons[result_code];
+            break;
+        case 7:
+            bacnet_device_control$result = "ABORT";
+            bacnet_device_control$result_code = abort_reasons[result_code];
+            break;
+        default:
+            break;
+    }
+
+    Log::write(LOG_BACNET_DEVICE_CONTROL, bacnet_device_control);
+}
+
+###################################################################################################
+###  Defines logging of bacnet_device_communication_control event -> bacnet_device_control.log  ###
+###################################################################################################
+event bacnet_device_communication_control(c: connection,
+                                          is_orig: bool,
+                                          invoke_id: count,
+                                          time_duration: count,
+                                          enable_disable: count,
+                                          password: string){
+
+    set_service(c);
+    local bacnet_device_control: BACnet_Device_Control;
+    bacnet_device_control$is_orig = is_orig;
+    bacnet_device_control$ts  = network_time();
+    bacnet_device_control$uid = c$uid;
+    bacnet_device_control$id  = c$id;
+
+    bacnet_device_control$invoke_id = invoke_id;
+    bacnet_device_control$pdu_service = "device_communication_control";
+    if( time_duration != UINT32_MAX )
+        bacnet_device_control$time_duration = time_duration;
+    bacnet_device_control$device_state = device_communication_control_states[enable_disable];
+    bacnet_device_control$password = password;
+
+    Log::write(LOG_BACNET_DEVICE_CONTROL, bacnet_device_control);
 }

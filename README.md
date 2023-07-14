@@ -8,10 +8,11 @@ ICSNPP-BACnet is a Zeek plugin for parsing and logging fields within the BACnet 
 
 This plugin was developed to be fully customizable, so if you would like to drill down into specific BACnet packets and log certain variables, add the logging functionality to [scripts/icsnpp/bacnet/main.zeek](scripts/icsnpp/bacnet/main.zeek). The functions within [scripts/icsnpp/bacnet/main.zeek](scripts/icsnpp/bacnet/main.zeek) and [src/events.bif](src/events.bif) should prove to be a good guide on how to add new logging functionality.
 
-This parser produces three log files. These log files are defined in [scripts/icsnpp/bacnet/main.zeek](scripts/icsnpp/bacnet/main.zeek).
+This parser produces four log files. These log files are defined in [scripts/icsnpp/bacnet/main.zeek](scripts/icsnpp/bacnet/main.zeek).
 * bacnet.log
 * bacnet_discovery.log
 * bacnet_property.log
+* bacnet_device_control.log
 
 For additional information on these log files, see the *Logging Capabilities* section below.
 
@@ -154,6 +155,29 @@ This log captures important variables for Read-Property-Request, Read-Property-A
 | property          | string    | Property type                                             |
 | array_index       | count     | Property array index                                      |
 | value             | string    | Value of property                                         |
+
+### Device Control Log (bacnet_device_control.log)
+
+#### Overview
+
+This log captures important variables for Reinitialized-Device and Device-Communication-Control messages and logs them to **bacnet_device_control.log**.
+
+#### Fields Captured
+
+| Field             | Type      | Description                                                                |
+| ----------------- |-----------|--------------------------------------------------------------------------- |
+| ts                | time      | Timestamp                                                                  |
+| uid               | string    | Unique ID for this connection                                              |
+| id                | conn_id   | Default Zeek connection info (IP addresses, ports)                         |
+| is_orig           | bool      | True if the message is sent from the originator                            |
+| invoke_id         | count     | Unique ID for all outstanding confirmed request/ACK APDUs                  |
+| pdu_service       | string    | APDU service choice (reinitialized_device or device_communication_control) |
+| time_duration     | count     | Number of minutes device should ignore other APDUs                         |
+| device_state      | string    | State to put device into                                                   |
+| password          | string    | Password                                                                   |
+| result            | string    | Success, Error, Reject, or Abort                                           |
+| result_code       | string    | Resulting Error/Reject/Abort Code                                          |
+
 
 ## BACnet File Extraction
 

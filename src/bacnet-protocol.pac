@@ -533,10 +533,10 @@ type Confirmed_Request_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: uint
         READ_PROPERTY_MULTIPLE          -> $context.flow.process_read_property_multiple(is_orig, service_request_tags);
         WRITE_PROPERTY                  -> $context.flow.process_write_property(is_orig, service_request_tags);
         WRITE_PROPERTY_MULTIPLE         -> $context.flow.process_write_property_multiple(is_orig, service_request_tags);
-        DEVICE_COMMUNICATION_CONTROL    -> $context.flow.process_device_communication_control(is_orig, service_request_tags);
+        DEVICE_COMMUNICATION_CONTROL    -> $context.flow.process_device_communication_control(is_orig, invoke_id, service_request_tags);
         CONFIRMED_PRIVATE_TRANSFER      -> $context.flow.process_confirmed_private_transfer(is_orig, service_request_tags);
         CONFIRMED_TEXT_MESSAGE          -> $context.flow.process_confirmed_text_message(is_orig, service_request_tags);
-        REINITIALIZE_DEVICE             -> $context.flow.process_reinitialize_device(is_orig, service_request_tags);
+        REINITIALIZE_DEVICE             -> $context.flow.process_reinitialize_device(is_orig, invoke_id, service_request_tags);
         VT_OPEN                         -> $context.flow.process_vt_open(is_orig, service_request_tags);
         VT_CLOSE                        -> $context.flow.process_vt_close(is_orig, service_request_tags);
         VT_DATA                         -> $context.flow.process_vt_data(is_orig, service_request_tags);

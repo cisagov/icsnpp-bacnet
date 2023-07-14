@@ -252,6 +252,51 @@ event bacnet_read_range_ack%(c: connection,
                              result_flags: count,
                              item_count: count%);
 
+## -----------------------------------bacnet-reinitialize-device-----------------------------------
+## Event Description:
+##      Event is generated for all BACnet Reinitialize_Device packets
+## Event Data:
+##      See process_reinitialize_device in bacnet_analyzer.pac
+## Default Output:
+##      Logged in bacnet_device_control.log
+## ------------------------------------------------------------------------------------------------
+event bacnet_reinitialize_device%(c: connection,
+                                  is_orig: bool,
+                                  invoke_id: count,
+                                  reinitialized_state: count,
+                                  password: string%);
+
+## ------------------------------bacnet-device-communication-control-------------------------------
+## Event Description:
+##      Event is generated for all BACnet Device_Communication_Control packets
+## Event Data:
+##      See process_device_communication_control in bacnet_analyzer.pac
+## Default Output:
+##      Logged in bacnet_device_control.log
+## ------------------------------------------------------------------------------------------------
+event bacnet_device_communication_control%(c: connection,
+                                           is_orig: bool,
+                                           invoke_id: count,
+                                           time_duration: count,
+                                           enable_disable: count,
+                                           password: string%);
+
+## ---------------------------------bacnet-device-control-response---------------------------------
+## Event Description:
+##      Event is generated for all BACnet Reinitialize_Device & Device_Communication_Control 
+##      Response packets
+## Event Data:
+##      See process_bacnet_apdu_header in bacnet_analyzer.pac
+## Default Output:
+##      Logged in bacnet_device_control.log
+## ------------------------------------------------------------------------------------------------
+event bacnet_device_control_response%(c: connection,
+                                      is_orig: bool,
+                                      invoke_id: count,
+                                      pdu_service: count,
+                                      pdu_type: count,
+                                      result_code: count%);
+
 ###################################################################################################
 ###################################  END OF LOGGED BY DEFAULT  ####################################
 ###################################################################################################
@@ -599,20 +644,6 @@ event bacnet_read_property_multiple%(c: connection,
 event bacnet_write_property_multiple%(c: connection,
                                       is_orig: bool%);
 
-## ------------------------------bacnet-device-communication-control-------------------------------
-## Event Description:
-##      Event is generated for all BACnet Device_Communication_Control packets
-## Event Data:
-##      See process_device_communication_control in bacnet_analyzer.pac
-## Default Output:
-##      No defined log in main.zeek by default
-## ------------------------------------------------------------------------------------------------
-event bacnet_device_communication_control%(c: connection,
-                                           is_orig: bool,
-                                           time_duration: count,
-                                           enable_disable: count,
-                                           password: string%);
-
 ## -------------------------------bacnet-confirmed-private-transfer--------------------------------
 ## Event Description:
 ##      Event is generated for all BACnet Confirmed_Private_Transfer packets
@@ -640,19 +671,6 @@ event bacnet_confirmed_text_message%(c: connection,
                                      instance_number: count,
                                      message_priority: count,
                                      message: string%);
-
-## -----------------------------------bacnet-reinitialize-device-----------------------------------
-## Event Description:
-##      Event is generated for all BACnet Reinitialize_Device packets
-## Event Data:
-##      See process_reinitialize_device in bacnet_analyzer.pac
-## Default Output:
-##      No defined log in main.zeek by default
-## ------------------------------------------------------------------------------------------------
-event bacnet_reinitialize_device%(c: connection,
-                                  is_orig: bool,
-                                  reinitialized_state: count,
-                                  password: string%);
 
 ## -----------------------------------------bacnet-vt-open-----------------------------------------
 ## Event Description:

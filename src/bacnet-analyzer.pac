@@ -299,6 +299,16 @@ refine flow BACNET_Flow += {
                                                                   result_code);
                 }
             }
+            if ( ::bacnet_device_control_response && (pdu_service == REINITIALIZE_DEVICE || pdu_service == DEVICE_COMMUNICATION_CONTROL) && (pdu_type == SIMPLE_ACK || pdu_type == ERROR_PDU || pdu_type == REJECT_PDU || pdu_type == ABORT_PDU))
+            {
+                zeek::BifEvent::enqueue_bacnet_device_control_response(connection()->zeek_analyzer(),
+                                                                       connection()->zeek_analyzer()->Conn(),
+                                                                       is_orig,
+                                                                       invoke_id,
+                                                                       pdu_service,
+                                                                       pdu_type,
+                                                                       result_code);
+            }
             return true;
         %}
 
@@ -1681,7 +1691,7 @@ refine flow BACNET_Flow += {
     ##      - enable_disable    ->  Enable/Disable
     ##      - password          ->  Password String
     ## ------------------------------------------------------------------------------------------------
-    function process_device_communication_control(is_orig: bool, tags: BACnet_Tag[]): bool
+    function process_device_communication_control(is_orig: bool, invoke_id: uint8, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_device_communication_control )
             {
@@ -1696,10 +1706,10 @@ refine flow BACNET_Flow += {
                         case 0:
                             time_duration = get_unsigned(${tags[i].tag_data});
                             break;
-                        case 3:
+                        case 1:
                             enable_disable = ${tags[i].tag_data[0]};
                             break;
-                        case 4:
+                        case 2:
                             password = get_string(${tags[i].tag_data});
                             break;
                         default:
@@ -1710,6 +1720,7 @@ refine flow BACNET_Flow += {
                 zeek::BifEvent::enqueue_bacnet_device_communication_control(connection()->zeek_analyzer(),
                                                                             connection()->zeek_analyzer()->Conn(),
                                                                             is_orig,
+                                                                            invoke_id,
                                                                             time_duration,
                                                                             enable_disable,
                                                                             zeek::make_intrusive<zeek::StringVal>(password));
@@ -1801,7 +1812,7 @@ refine flow BACNET_Flow += {
     ##      - reinitialized_state   -> Reinitialized State of Device
     ##      - password              -> Password String
     ## ------------------------------------------------------------------------------------------------
-    function process_reinitialize_device(is_orig: bool, tags: BACnet_Tag[]): bool
+    function process_reinitialize_device(is_orig: bool, invoke_id: uint8, tags: BACnet_Tag[]): bool
         %{
             if ( ::bacnet_reinitialize_device )
             {
@@ -1814,6 +1825,7 @@ refine flow BACNET_Flow += {
                 zeek::BifEvent::enqueue_bacnet_reinitialize_device(connection()->zeek_analyzer(),
                                                                    connection()->zeek_analyzer()->Conn(),
                                                                    is_orig,
+                                                                   invoke_id,
                                                                    reinitialized_state,
                                                                    zeek::make_intrusive<zeek::StringVal>(password));
             }
