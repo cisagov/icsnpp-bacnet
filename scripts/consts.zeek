@@ -294,7 +294,7 @@ export {
         [17] = "device_communication_control",
         [18] = "confirmed_private_transfer",
         [19] = "confirmed_text_message",
-        [20] = "reinitialized_device",
+        [20] = "reinitialize_device",
         [21] = "vt_open",
         [22] = "vt_close",
         [23] = "vt_data",

@@ -161,7 +161,7 @@ This log captures important variables for Read-Property-Request, Read-Property-A
 
 #### Overview
 
-This log captures important variables for Reinitialized-Device and Device-Communication-Control messages and logs them to **bacnet_device_control.log**.
+This log captures important variables for Reinitialize-Device and Device-Communication-Control messages and logs them to **bacnet_device_control.log**.
 
 #### Fields Captured
 
@@ -172,7 +172,7 @@ This log captures important variables for Reinitialized-Device and Device-Commun
 | id                | conn_id   | Default Zeek connection info (IP addresses, ports)                         |
 | is_orig           | bool      | True if the message is sent from the originator                            |
 | invoke_id         | count     | Unique ID for all outstanding confirmed request/ACK APDUs                  |
-| pdu_service       | string    | APDU service choice (reinitialized_device or device_communication_control) |
+| pdu_service       | string    | APDU service choice (reinitialize_device or device_communication_control) |
 | time_duration     | count     | Number of minutes device should ignore other APDUs                         |
 | device_state      | string    | State to put device into                                                   |
 | password          | string    | Password                                                                   |

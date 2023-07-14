@@ -69,7 +69,7 @@ export {
     global log_bacnet_property: event(rec: BACnet_Property);
 
     ###############################################################################################
-    ########  Reinitialized-Device & Device-Communication-Control -> bacnet_property.log  #########
+    #########  Reinitialize-Device & Device-Communication-Control -> bacnet_property.log  #########
     ###############################################################################################
     type BACnet_Device_Control: record {
         ts                      : time      &log;   # Timestamp of event
@@ -77,7 +77,7 @@ export {
         id                      : conn_id   &log;   # Zeek connection struct (addresses and ports)
         is_orig                 : bool      &log;   # the message came from the originator/client or the responder/server
         invoke_id               : count     &log;   # invoke ID for help matching requests/responses
-        pdu_service             : string    &log;   # reinitialized_device or device_communication_control
+        pdu_service             : string    &log;   # reinitialize_device or device_communication_control
         time_duration           : count     &log;   # number of minutes remote device should ignore other APDUs
         device_state            : string    &log;   # state to put device into
         password                : string    &log;   # password
@@ -591,7 +591,7 @@ event bacnet_reinitialize_device(c: connection,
     bacnet_device_control$id  = c$id;
 
     bacnet_device_control$invoke_id = invoke_id;
-    bacnet_device_control$pdu_service = "reinitialized_device";
+    bacnet_device_control$pdu_service = "reinitialize_device";
     bacnet_device_control$device_state = reinitialize_device_states[reinitialized_state];
     bacnet_device_control$password = password;
     
