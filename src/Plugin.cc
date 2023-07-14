@@ -21,7 +21,7 @@ zeek::plugin::Configuration Plugin::Configure()
     config.name = "ICSNPP::BACnet";
     config.description = "BACnet Protocol analyzer";
     config.version.major = 1;
-    config.version.minor = 3;
+    config.version.minor = 4;
 
     return config;
 }
