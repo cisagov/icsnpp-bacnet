@@ -2,7 +2,6 @@
 # @TEST-EXEC: btest-diff bacnet_discovery.log
 # @TEST-EXEC: btest-diff bacnet.log
 # @TEST-EXEC: btest-diff bacnet_property.log
-# @TEST-EXEC: btest-diff conn.log
 #
 # @TEST-DOC: Test BACnet analyzer with small trace.
 

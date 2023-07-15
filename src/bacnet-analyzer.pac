@@ -768,6 +768,12 @@ refine flow BACNET_Flow += {
                     }
                 }
 
+                if (low_limit == UINT32_MAX)
+                    high_limit = UINT32_MAX;
+
+                if (high_limit == UINT32_MAX)
+                    low_limit = UINT32_MAX;
+
                 zeek::BifEvent::enqueue_bacnet_who_has(connection()->zeek_analyzer(),
                                                        connection()->zeek_analyzer()->Conn(),
                                                        is_orig,
@@ -804,6 +810,12 @@ refine flow BACNET_Flow += {
                 {
                     low_limit = get_unsigned(${tags[0].tag_data});
                     high_limit = get_unsigned(${tags[1].tag_data});
+                }
+
+                if (low_limit == 0 && high_limit == 0)
+                {
+                    low_limit = UINT32_MAX;
+                    high_limit = UINT32_MAX;
                 }
 
                 zeek::BifEvent::enqueue_bacnet_who_is(connection()->zeek_analyzer(),
@@ -1716,13 +1728,14 @@ refine flow BACNET_Flow += {
                 uint32 time_duration = UINT32_MAX;
                 uint8 enable_disable = UINT8_MAX;
                 string password = "";
-
                 for ( uint32 i = 0; i < ${tags}->size(); ++i )
                 {
                     switch(${tags[i].tag_num})
                     {
                         case 0:
                             time_duration = get_unsigned(${tags[i].tag_data});
+                            if (time_duration == 0)
+                                time_duration = UINT32_MAX;
                             break;
                         case 1:
                             enable_disable = ${tags[i].tag_data[0]};

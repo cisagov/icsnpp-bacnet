@@ -513,7 +513,7 @@ type Confirmed_Request_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: uint
         default -> no_proposed_window:      empty;
     };
     service_choice          : uint8 &enforce(service_choice <= 0x1d);
-    service_request_tags    : BACnet_Tag[] &until($input == 0);
+    service_request_tags    : BACnet_Tag[] &until($input.length() == 0);
 } &let {
     deliver: bool = case service_choice of {
         ACKNOWLEDGE_ALARM               -> $context.flow.process_acknowledge_alarm(is_orig, invoke_id, service_request_tags);
@@ -570,7 +570,7 @@ type Confirmed_Request_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: uint
 ## ------------------------------------------------------------------------------------------------
 type Unconfirmed_Request_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: uint8) = record {
     service_choice              : uint8 &enforce(service_choice <= 0x0b);
-    service_request_tags        : BACnet_Tag[] &until($input == 0);
+    service_request_tags        : BACnet_Tag[] &until($input.length() == 0);
 } &let {
     deliver: bool = case service_choice of {
         I_AM                                    -> $context.flow.process_i_am(is_orig, service_request_tags);
@@ -821,8 +821,6 @@ type Abort_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: uint8) = record 
 ##            - 6: Opening Tag (Length = 0)
 ##            - 7: Closing Tag (Length = 0)
 ##      - Tag Data:     Tag_Length  -> Data contained in tag
-## Protocol Parsing:
-##      Logs BVLC Function, PDU Type, Invoke ID, and Abort Reason to bacnet.log
 ## ------------------------------------------------------------------------------------------------
 type BACnet_Tag = record {
     tag_header      : uint8;
