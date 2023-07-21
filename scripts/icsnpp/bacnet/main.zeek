@@ -24,6 +24,10 @@ export {
         uid                     : string    &log;   # Zeek unique ID for connection
         id                      : conn_id   &log;   # Zeek connection struct (addresses and ports)
         is_orig                 : bool      &log;   # the message came from the originator/client or the responder/server
+        source_h                : addr      &log;   # Source IP Address
+        source_p                : port      &log;   # Source Port
+        destination_h           : addr      &log;   # Destination IP Address
+        destination_p           : port      &log;   # Destination Port
         bvlc_function           : string    &log;   # BVLC function (see bvlc_functions)
         pdu_type                : string    &log;   # APDU type (see apdu_types)
         pdu_service             : string    &log;   # APDU service (see unconfirmed_service_choice and confirmed_service_choice)
@@ -41,6 +45,10 @@ export {
         uid                     : string    &log;   # Zeek unique ID for connection
         id                      : conn_id   &log;   # Zeek connection struct (addresses and ports)
         is_orig                 : bool      &log;   # the message came from the originator/client or the responder/server
+        source_h                : addr      &log;   # Source IP Address
+        source_p                : port      &log;   # Source Port
+        destination_h           : addr      &log;   # Destination IP Address
+        destination_p           : port      &log;   # Destination Port
         pdu_service             : string    &log;   # who-is, i-am, who-has, or i-have
         object_type             : string    &log;   # BACnetObjectIdentifier object (see object_types)
         instance_number         : count     &log;   # BACnetObjectIdentifier instance number
@@ -58,6 +66,10 @@ export {
         uid                     : string    &log;   # Zeek unique ID for connection
         id                      : conn_id   &log;   # Zeek connection struct (addresses and ports)
         is_orig                 : bool      &log;   # the message came from the originator/client or the responder/server
+        source_h                : addr      &log;   # Source IP Address
+        source_p                : port      &log;   # Source Port
+        destination_h           : addr      &log;   # Destination IP Address
+        destination_p           : port      &log;   # Destination Port
         invoke_id               : count     &log;   # invoke ID for help matching requests/responses
         pdu_service             : string    &log;   # read-property-request/ack, write-property-request
         object_type             : string    &log;   # BACnetObjectIdentifier object (see object_types)
@@ -76,6 +88,10 @@ export {
         uid                     : string    &log;   # Zeek unique ID for connection
         id                      : conn_id   &log;   # Zeek connection struct (addresses and ports)
         is_orig                 : bool      &log;   # the message came from the originator/client or the responder/server
+        source_h                : addr      &log;   # Source IP Address
+        source_p                : port      &log;   # Source Port
+        destination_h           : addr      &log;   # Destination IP Address
+        destination_p           : port      &log;   # Destination Port
         invoke_id               : count     &log;   # invoke ID for help matching requests/responses
         pdu_service             : string    &log;   # reinitialize_device or device_communication_control
         time_duration           : count     &log;   # number of minutes remote device should ignore other APDUs
@@ -141,6 +157,20 @@ event bacnet_apdu_header(c: connection,
     bacnet_log$uid = c$uid;
     bacnet_log$id  = c$id;
 
+    if(is_orig)
+    {
+        bacnet_log$source_h         = c$id$orig_h;
+        bacnet_log$source_p         = c$id$orig_p;
+        bacnet_log$destination_h    = c$id$resp_h;
+        bacnet_log$destination_p    = c$id$resp_p;
+    }else
+    {
+        bacnet_log$source_h         = c$id$resp_h;
+        bacnet_log$source_p         = c$id$resp_p;
+        bacnet_log$destination_h    = c$id$orig_h;
+        bacnet_log$destination_p    = c$id$orig_p;
+    }
+
     bacnet_log$bvlc_function = bvlc_functions[bvlc_function];
 
     if (bvlc_function == 0)
@@ -196,6 +226,20 @@ event bacnet_npdu_header(c: connection,
     bacnet_log$uid = c$uid;
     bacnet_log$id  = c$id;
 
+    if(is_orig)
+    {
+        bacnet_log$source_h         = c$id$orig_h;
+        bacnet_log$source_p         = c$id$orig_p;
+        bacnet_log$destination_h    = c$id$resp_h;
+        bacnet_log$destination_p    = c$id$resp_p;
+    }else
+    {
+        bacnet_log$source_h         = c$id$resp_h;
+        bacnet_log$source_p         = c$id$resp_p;
+        bacnet_log$destination_h    = c$id$orig_h;
+        bacnet_log$destination_p    = c$id$orig_p;
+    }
+
     bacnet_log$bvlc_function = bvlc_functions[bvlc_function];
 
     bacnet_log$pdu_type = "NPDU";
@@ -219,6 +263,20 @@ event bacnet_who_is(c: connection,
     bacnet_discovery$ts  = network_time();
     bacnet_discovery$uid = c$uid;
     bacnet_discovery$id  = c$id;
+
+    if(is_orig)
+    {
+        bacnet_discovery$source_h         = c$id$orig_h;
+        bacnet_discovery$source_p         = c$id$orig_p;
+        bacnet_discovery$destination_h    = c$id$resp_h;
+        bacnet_discovery$destination_p    = c$id$resp_p;
+    }else
+    {
+        bacnet_discovery$source_h         = c$id$resp_h;
+        bacnet_discovery$source_p         = c$id$resp_p;
+        bacnet_discovery$destination_h    = c$id$orig_h;
+        bacnet_discovery$destination_p    = c$id$orig_p;
+    }
 
     bacnet_discovery$pdu_service = "who-is";
 
@@ -248,6 +306,20 @@ event bacnet_i_am(c: connection,
     bacnet_discovery$uid = c$uid;
     bacnet_discovery$id  = c$id;
 
+    if(is_orig)
+    {
+        bacnet_discovery$source_h         = c$id$orig_h;
+        bacnet_discovery$source_p         = c$id$orig_p;
+        bacnet_discovery$destination_h    = c$id$resp_h;
+        bacnet_discovery$destination_p    = c$id$resp_p;
+    }else
+    {
+        bacnet_discovery$source_h         = c$id$resp_h;
+        bacnet_discovery$source_p         = c$id$resp_p;
+        bacnet_discovery$destination_h    = c$id$orig_h;
+        bacnet_discovery$destination_p    = c$id$orig_p;
+    }
+
     bacnet_discovery$pdu_service = "i-am";
     if(object_type != UINT32_MAX)
         bacnet_discovery$object_type = object_types[object_type];
@@ -275,6 +347,20 @@ event bacnet_who_has(c: connection,
     bacnet_discovery$ts  = network_time();
     bacnet_discovery$uid = c$uid;
     bacnet_discovery$id  = c$id;
+
+    if(is_orig)
+    {
+        bacnet_discovery$source_h         = c$id$orig_h;
+        bacnet_discovery$source_p         = c$id$orig_p;
+        bacnet_discovery$destination_h    = c$id$resp_h;
+        bacnet_discovery$destination_p    = c$id$resp_p;
+    }else
+    {
+        bacnet_discovery$source_h         = c$id$resp_h;
+        bacnet_discovery$source_p         = c$id$resp_p;
+        bacnet_discovery$destination_h    = c$id$orig_h;
+        bacnet_discovery$destination_p    = c$id$orig_p;
+    }
 
     bacnet_discovery$pdu_service = "who-has";
 
@@ -314,6 +400,20 @@ event bacnet_i_have(c: connection,
     bacnet_discovery$uid = c$uid;
     bacnet_discovery$id  = c$id;
 
+    if(is_orig)
+    {
+        bacnet_discovery$source_h         = c$id$orig_h;
+        bacnet_discovery$source_p         = c$id$orig_p;
+        bacnet_discovery$destination_h    = c$id$resp_h;
+        bacnet_discovery$destination_p    = c$id$resp_p;
+    }else
+    {
+        bacnet_discovery$source_h         = c$id$resp_h;
+        bacnet_discovery$source_p         = c$id$resp_p;
+        bacnet_discovery$destination_h    = c$id$orig_h;
+        bacnet_discovery$destination_p    = c$id$orig_p;
+    }
+
     bacnet_discovery$pdu_service = "i-have";
 
     if(object_object_type != UINT32_MAX)
@@ -345,6 +445,21 @@ event bacnet_read_property(c: connection,
     bacnet_property$ts  = network_time();
     bacnet_property$uid = c$uid;
     bacnet_property$id  = c$id;
+
+    if(is_orig)
+    {
+        bacnet_property$source_h         = c$id$orig_h;
+        bacnet_property$source_p         = c$id$orig_p;
+        bacnet_property$destination_h    = c$id$resp_h;
+        bacnet_property$destination_p    = c$id$resp_p;
+    }else
+    {
+        bacnet_property$source_h         = c$id$resp_h;
+        bacnet_property$source_p         = c$id$resp_p;
+        bacnet_property$destination_h    = c$id$orig_h;
+        bacnet_property$destination_p    = c$id$orig_p;
+    }
+
     bacnet_property$invoke_id  = invoke_id;
 
     bacnet_property$pdu_service = pdu_service;
@@ -377,6 +492,22 @@ event bacnet_read_property_ack(c: connection,
     bacnet_property$ts  = network_time();
     bacnet_property$uid = c$uid;
     bacnet_property$id  = c$id;
+
+    if(is_orig)
+    {
+        bacnet_property$source_h         = c$id$orig_h;
+        bacnet_property$source_p         = c$id$orig_p;
+        bacnet_property$destination_h    = c$id$resp_h;
+        bacnet_property$destination_p    = c$id$resp_p;
+    }else
+    {
+        bacnet_property$source_h         = c$id$resp_h;
+        bacnet_property$source_p         = c$id$resp_p;
+        bacnet_property$destination_h    = c$id$orig_h;
+        bacnet_property$destination_p    = c$id$orig_p;
+    }
+
+    
     bacnet_property$invoke_id  = invoke_id;
 
     bacnet_property$pdu_service = pdu_service;
@@ -444,6 +575,22 @@ event bacnet_write_property(c: connection,
     bacnet_property$ts  = network_time();
     bacnet_property$uid = c$uid;
     bacnet_property$id  = c$id;
+
+    if(is_orig)
+    {
+        bacnet_property$source_h         = c$id$orig_h;
+        bacnet_property$source_p         = c$id$orig_p;
+        bacnet_property$destination_h    = c$id$resp_h;
+        bacnet_property$destination_p    = c$id$resp_p;
+    }else
+    {
+        bacnet_property$source_h         = c$id$resp_h;
+        bacnet_property$source_p         = c$id$resp_p;
+        bacnet_property$destination_h    = c$id$orig_h;
+        bacnet_property$destination_p    = c$id$orig_p;
+    }
+
+    
     bacnet_property$invoke_id  = invoke_id;
 
     bacnet_property$pdu_service = "write-property";
@@ -508,6 +655,22 @@ event bacnet_property_error(c: connection,
     bacnet_property$ts  = network_time();
     bacnet_property$uid = c$uid;
     bacnet_property$id  = c$id;
+
+    if(is_orig)
+    {
+        bacnet_property$source_h         = c$id$orig_h;
+        bacnet_property$source_p         = c$id$orig_p;
+        bacnet_property$destination_h    = c$id$resp_h;
+        bacnet_property$destination_p    = c$id$resp_p;
+    }else
+    {
+        bacnet_property$source_h         = c$id$resp_h;
+        bacnet_property$source_p         = c$id$resp_p;
+        bacnet_property$destination_h    = c$id$orig_h;
+        bacnet_property$destination_p    = c$id$orig_p;
+    }
+
+    
     bacnet_property$invoke_id  = invoke_id;
 
     bacnet_property$pdu_service = "ERROR: " + confirmed_service_choice[pdu_service];
@@ -530,6 +693,22 @@ event bacnet_read_range(c: connection,
     bacnet_property$ts  = network_time();
     bacnet_property$uid = c$uid;
     bacnet_property$id  = c$id;
+
+    if(is_orig)
+    {
+        bacnet_property$source_h         = c$id$orig_h;
+        bacnet_property$source_p         = c$id$orig_p;
+        bacnet_property$destination_h    = c$id$resp_h;
+        bacnet_property$destination_p    = c$id$resp_p;
+    }else
+    {
+        bacnet_property$source_h         = c$id$resp_h;
+        bacnet_property$source_p         = c$id$resp_p;
+        bacnet_property$destination_h    = c$id$orig_h;
+        bacnet_property$destination_p    = c$id$orig_p;
+    }
+
+    
     bacnet_property$invoke_id  = invoke_id;
 
     bacnet_property$pdu_service = "read-range-request";
@@ -559,6 +738,22 @@ event bacnet_read_range_ack(c: connection,
     bacnet_property$ts  = network_time();
     bacnet_property$uid = c$uid;
     bacnet_property$id  = c$id;
+
+    if(is_orig)
+    {
+        bacnet_property$source_h         = c$id$orig_h;
+        bacnet_property$source_p         = c$id$orig_p;
+        bacnet_property$destination_h    = c$id$resp_h;
+        bacnet_property$destination_p    = c$id$resp_p;
+    }else
+    {
+        bacnet_property$source_h         = c$id$resp_h;
+        bacnet_property$source_p         = c$id$resp_p;
+        bacnet_property$destination_h    = c$id$orig_h;
+        bacnet_property$destination_p    = c$id$orig_p;
+    }
+
+    
     bacnet_property$invoke_id  = invoke_id;
 
     bacnet_property$pdu_service = "read-range-ack";
@@ -590,6 +785,22 @@ event bacnet_reinitialize_device(c: connection,
     bacnet_device_control$uid = c$uid;
     bacnet_device_control$id  = c$id;
 
+    if(is_orig)
+    {
+        bacnet_device_control$source_h         = c$id$orig_h;
+        bacnet_device_control$source_p         = c$id$orig_p;
+        bacnet_device_control$destination_h    = c$id$resp_h;
+        bacnet_device_control$destination_p    = c$id$resp_p;
+    }else
+    {
+        bacnet_device_control$source_h         = c$id$resp_h;
+        bacnet_device_control$source_p         = c$id$resp_p;
+        bacnet_device_control$destination_h    = c$id$orig_h;
+        bacnet_device_control$destination_p    = c$id$orig_p;
+    }
+
+    
+
     bacnet_device_control$invoke_id = invoke_id;
     bacnet_device_control$pdu_service = "reinitialize_device";
     bacnet_device_control$device_state = reinitialize_device_states[reinitialized_state];
@@ -614,6 +825,20 @@ event bacnet_device_control_response(c: connection,
     bacnet_device_control$ts  = network_time();
     bacnet_device_control$uid = c$uid;
     bacnet_device_control$id  = c$id;
+
+    if(is_orig)
+    {
+        bacnet_device_control$source_h         = c$id$orig_h;
+        bacnet_device_control$source_p         = c$id$orig_p;
+        bacnet_device_control$destination_h    = c$id$resp_h;
+        bacnet_device_control$destination_p    = c$id$resp_p;
+    }else
+    {
+        bacnet_device_control$source_h         = c$id$resp_h;
+        bacnet_device_control$source_p         = c$id$resp_p;
+        bacnet_device_control$destination_h    = c$id$orig_h;
+        bacnet_device_control$destination_p    = c$id$orig_p;
+    }
 
     bacnet_device_control$invoke_id = invoke_id;
     bacnet_device_control$pdu_service = confirmed_service_choice[pdu_service];
@@ -657,6 +882,20 @@ event bacnet_device_communication_control(c: connection,
     bacnet_device_control$ts  = network_time();
     bacnet_device_control$uid = c$uid;
     bacnet_device_control$id  = c$id;
+
+    if(is_orig)
+    {
+        bacnet_device_control$source_h         = c$id$orig_h;
+        bacnet_device_control$source_p         = c$id$orig_p;
+        bacnet_device_control$destination_h    = c$id$resp_h;
+        bacnet_device_control$destination_p    = c$id$resp_p;
+    }else
+    {
+        bacnet_device_control$source_h         = c$id$resp_h;
+        bacnet_device_control$source_p         = c$id$resp_p;
+        bacnet_device_control$destination_h    = c$id$orig_h;
+        bacnet_device_control$destination_p    = c$id$orig_p;
+    }
 
     bacnet_device_control$invoke_id = invoke_id;
     bacnet_device_control$pdu_service = "device_communication_control";

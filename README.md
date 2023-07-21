@@ -88,31 +88,39 @@ This log captures BACnet header information for every BACnet/IP packet and logs 
 
 #### Fields Captured (BACnet-APDU Packets)
 
-| Field         | Type      | Description                                               |
-| ------------- |-----------|-----------------------------------------------------------| 
-| ts            | time      | Timestamp                                                 |
-| uid           | string    | Unique ID for this connection                             |
-| id            | conn_id   | Default Zeek connection info (IP addresses, ports)        |
-| is_orig       | bool      | True if the packet is sent from the originator            |
-| bvlc_function | string    | BVLC function                                             |
-| pdu_type      | string    | APDU service type                                         |
-| pdu_service   | string    | APDU service choice                                       |
-| invoke_id     | count     | Unique ID for all outstanding confirmed request/ACK APDUs |
-| result_code   | string    | Error code or reject/abort reason                         |
+| Field         | Type      | Description                                                   |
+| ------------- |-----------|---------------------------------------------------------------|
+| ts            | time      | Timestamp                                                     |
+| uid           | string    | Unique ID for this connection                                 |
+| id            | conn_id   | Default Zeek connection info (IP addresses, ports)            |
+| is_orig       | bool      | True if the packet is sent from the originator                |
+| source_h      | address   | Source IP address (see *Source and Destination Fields*)       |
+| source_p      | port      | Source Port (see *Source and Destination Fields*)             |
+| destination_h | address   | Destination IP address (see *Source and Destination Fields*)  |
+| destination_p | port      | Destination Port (see *Source and Destination Fields*)        |
+| bvlc_function | string    | BVLC function                                                 |
+| pdu_type      | string    | APDU service type                                             |
+| pdu_service   | string    | APDU service choice                                           |
+| invoke_id     | count     | Unique ID for all outstanding confirmed request/ACK APDUs     |
+| result_code   | string    | Error code or reject/abort reason                             |
 
 #### Fields Captured (BACnet-NPDU Packets)
 
-| Field         | Type      | Description                                               |
-| ------------- |-----------|-----------------------------------------------------------| 
-| ts            | time      | Timestamp                                                 |
-| uid           | string    | Unique ID for this connection                             |
-| id            | conn_id   | Default Zeek connection info (IP addresses, ports)        |
-| is_orig       | bool      | True if the packet is sent from the originator            |
-| bvlc_function | string    | BVLC function                                             |
-| pdu_type      | string    | static "NPDU" string                                      |
-| pdu_service   | string    | NPDU message type                                         |
-| invoke_id     | count     | NPDU destination network address                          |
-| result_code   | string    | N/A                                                       |
+| Field         | Type      | Description                                                   |
+| ------------- |-----------|---------------------------------------------------------------|
+| ts            | time      | Timestamp                                                     |
+| uid           | string    | Unique ID for this connection                                 |
+| id            | conn_id   | Default Zeek connection info (IP addresses, ports)            |
+| is_orig       | bool      | True if the packet is sent from the originator                |
+| source_h      | address   | Source IP address (see *Source and Destination Fields*)       |
+| source_p      | port      | Source Port (see *Source and Destination Fields*)             |
+| destination_h | address   | Destination IP address (see *Source and Destination Fields*)  |
+| destination_p | port      | Destination Port (see *Source and Destination Fields*)        |
+| bvlc_function | string    | BVLC function                                                 |
+| pdu_type      | string    | static "NPDU" string                                          |
+| pdu_service   | string    | NPDU message type                                             |
+| invoke_id     | count     | NPDU destination network address                              |
+| result_code   | string    | N/A                                                           |
 
 ### Discovery Log (bacnet_discovery.log)
 
@@ -128,6 +136,10 @@ This log captures important fields for Who-Is, I-Am, Who-Has, and I-Have message
 | uid               | string    | Unique ID for this connection                                   |
 | id                | conn_id   | Default Zeek connection info (IP addresses, ports)              |
 | is_orig           | bool      | True if the message is sent from the originator                 |
+| source_h          | address   | Source IP address (see *Source and Destination Fields*)         |
+| source_p          | port      | Source Port (see *Source and Destination Fields*)               |
+| destination_h     | address   | Destination IP address (see *Source and Destination Fields*)    |
+| destination_p     | port      | Destination Port (see *Source and Destination Fields*)          |
 | pdu_service       | string    | APDU service choice (who-is, i-am, who-has, or i-have)          |
 | object_type       | string    | BACnet device's object type                                     |
 | instance_number   | count     | BACnet device's instance number                                 |
@@ -143,19 +155,23 @@ This log captures important variables for Read-Property-Request, Read-Property-A
 
 #### Fields Captured
 
-| Field             | Type      | Description                                               |
-| ----------------- |-----------|---------------------------------------------------------- |
-| ts                | time      | Timestamp                                                 |
-| uid               | string    | Unique ID for this connection                             |
-| id                | conn_id   | Default Zeek connection info (IP addresses, ports)        |
-| is_orig           | bool      | True if the message is sent from the originator           |
-| invoke_id         | count     | Unique ID for all outstanding confirmed request/ACK APDUs                  |
-| pdu_service       | string    | APDU service choice (read or write property services)     |
-| object_type       | string    | BACnet device's object type                               |
-| instance_number   | count     | BACnet device's instance number                           |
-| property          | string    | Property type                                             |
-| array_index       | count     | Property array index                                      |
-| value             | string    | Value of property                                         |
+| Field             | Type      | Description                                                   |
+| ----------------- |-----------|---------------------------------------------------------------|
+| ts                | time      | Timestamp                                                     |
+| uid               | string    | Unique ID for this connection                                 |
+| id                | conn_id   | Default Zeek connection info (IP addresses, ports)            |
+| is_orig           | bool      | True if the message is sent from the originator               |
+| source_h          | address   | Source IP address (see *Source and Destination Fields*)       |
+| source_p          | port      | Source Port (see *Source and Destination Fields*)             |
+| destination_h     | address   | Destination IP address (see *Source and Destination Fields*)  |
+| destination_p     | port      | Destination Port (see *Source and Destination Fields*)        |
+| invoke_id         | count     | Unique ID for all outstanding confirmed request/ACK APDUs     |
+| pdu_service       | string    | APDU service choice (read or write property services)         |
+| object_type       | string    | BACnet device's object type                                   |
+| instance_number   | count     | BACnet device's instance number                               |
+| property          | string    | Property type                                                 |
+| array_index       | count     | Property array index                                          |
+| value             | string    | Value of property                                             |
 
 ### Device Control Log (bacnet_device_control.log)
 
@@ -171,14 +187,61 @@ This log captures important variables for Reinitialize-Device and Device-Communi
 | uid               | string    | Unique ID for this connection                                              |
 | id                | conn_id   | Default Zeek connection info (IP addresses, ports)                         |
 | is_orig           | bool      | True if the message is sent from the originator                            |
+| source_h          | address   | Source IP address (see *Source and Destination Fields*)                    |
+| source_p          | port      | Source Port (see *Source and Destination Fields*)                          |
+| destination_h     | address   | Destination IP address (see *Source and Destination Fields*)               |
+| destination_p     | port      | Destination Port (see *Source and Destination Fields*)                     |
 | invoke_id         | count     | Unique ID for all outstanding confirmed request/ACK APDUs                  |
-| pdu_service       | string    | APDU service choice (reinitialize_device or device_communication_control) |
+| pdu_service       | string    | APDU service choice (reinitialize_device or device_communication_control)  |
 | time_duration     | count     | Number of minutes device should ignore other APDUs                         |
 | device_state      | string    | State to put device into                                                   |
 | password          | string    | Password                                                                   |
 | result            | string    | Success, Error, Reject, or Abort                                           |
 | result_code       | string    | Resulting Error/Reject/Abort Code                                          |
 
+### Source and Destination Fields
+
+#### Overview
+
+Zeek's typical behavior is to focus on and log packets from the originator and not log packets from the responder. However, most ICS protocols contain useful information in the responses, so the ICSNPP parsers log both originator and responses packets. Zeek's default behavior, defined in its `id` struct, is to never switch these originator/responder roles which leads to inconsistencies and inaccuracies when looking at ICS traffic that logs responses.
+
+The default Zeek `id` struct contains the following logged fields:
+* id.orig_h (Original Originator/Source Host)
+* id.orig_p (Original Originator/Source Port)
+* id.resp_h (Original Responder/Destination Host)
+* id.resp_p (Original Responder/Destination Port)
+
+Additionally, the `is_orig` field is a boolean field that is set to T (True) when the id_orig fields are the true originators/source and F (False) when the id_resp fields are the true originators/source.
+
+To not break existing platforms that utilize the default `id` struct and `is_orig` field functionality, the ICSNPP team has added four new fields to each log file instead of changing Zeek's default behavior. These four new fields provide the accurate information regarding source and destination IP addresses and ports:
+* source_h (True Originator/Source Host)
+* source_p (True Originator/Source Port)
+* destination_h (True Responder/Destination Host)
+* destination_p (True Responder/Destination Port)
+
+The pseudocode below shows the relationship between the `id` struct, `is_orig` field, and the new `source` and `destination` fields.
+
+```
+if is_orig == True
+    source_h == id.orig_h
+    source_p == id.orig_p
+    destination_h == id.resp_h
+    destination_p == id.resp_p
+if is_orig == False
+    source_h == id.resp_h
+    source_p == id.resp_p
+    destination_h == id.orig_h
+    destination_p == id.orig_p
+```
+
+#### Example
+
+The table below shows an example of these fields in the log files. The first log in the table represents a Modbus request from 192.168.1.10 -> 192.168.1.200 and the second log represents a Modbus reply from 192.168.1.200 -> 192.168.1.10. As shown in the table below, the `id` structure lists both packets as having the same originator and responder, but the `source` and `destination` fields reflect the true source and destination of these packets.
+
+| id.orig_h    | id.orig_p | id.resp_h     | id.resp_p | is_orig | source_h      | source_p | destination_h | destination_p |
+| ------------ | --------- |---------------|-----------|---------|---------------|----------|---------------|-------------- |
+| 192.168.1.10 | 47785     | 192.168.1.200 | 502       | T       | 192.168.1.10  | 47785    | 192.168.1.200 | 502           |
+| 192.168.1.10 | 47785     | 192.168.1.200 | 502       | F       | 192.168.1.200 | 502      | 192.168.1.10  | 47785         |
 
 ## BACnet File Extraction
 
