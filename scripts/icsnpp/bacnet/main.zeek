@@ -102,6 +102,12 @@ export {
     };
     global log_bacnet_device_control: event(rec: BACnet_Device_Control);
 
+    ## Log policies, for log filtering.
+    global log_policy: Log::PolicyHook;
+    global log_policy_discovery: Log::PolicyHook;
+    global log_policy_property: Log::PolicyHook;
+    global log_policy_device_control: Log::PolicyHook;
+
 }
 
 ## Defines BACnet Ports
@@ -114,19 +120,23 @@ redef likely_server_ports += { ports };
 event zeek_init() &priority=5{
     Log::create_stream(Bacnet::LOG_BACNET, [$columns=BACnet_Header,
                                             $ev=log_bacnet,
-                                            $path="bacnet"]);
+                                            $path="bacnet",
+                                            $policy=log_policy]);
 
     Log::create_stream(Bacnet::LOG_BACNET_DISCOVERY, [$columns=BACnet_Discovery,
                                                       $ev=log_bacnet_discovery,
-                                                      $path="bacnet_discovery"]);
+                                                      $path="bacnet_discovery",
+                                                      $policy=log_policy_discovery]);
 
     Log::create_stream(Bacnet::LOG_BACNET_PROPERTY, [$columns=BACnet_Property,
                                                      $ev=log_bacnet_property,
-                                                     $path="bacnet_property"]);
+                                                     $path="bacnet_property",
+                                                     $policy=log_policy_property]);
 
     Log::create_stream(Bacnet::LOG_BACNET_DEVICE_CONTROL, [$columns=BACnet_Device_Control,
                                                      $ev=log_bacnet_device_control,
-                                                     $path="bacnet_device_control"]);
+                                                     $path="bacnet_device_control",
+                                                     $policy=log_policy_device_control]);
 
     Analyzer::register_for_ports(Analyzer::ANALYZER_BACNET, ports);
 }
