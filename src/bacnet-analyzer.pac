@@ -2472,7 +2472,7 @@ end_of_service_request_tags: ;
                     uint32 property_identifier = get_unsigned(${tags[1].tag_data});
                     uint32 property_array_index = UINT32_MAX;
 
-                    uint8 i = 2;
+                    uint32 i = 2;
 
                     while (i < ${tags}->size()) {
                         if(${tags[i].tag_num} == 2)
@@ -2484,10 +2484,11 @@ end_of_service_request_tags: ;
 
                         string property_value = "";
                     
-                        if ( ${tags}->size() >= i )
+                        printf("process_read_property_ack: i: %d\n", i);
+                        fflush(stdout);
+                        if ( ${tags}->size() > i )
                             property_value = parse_tag(${tags[i].tag_num},${tags[i].tag_class},${tags[i].tag_data},${tags[i].tag_length},${tags[i].tag_length_a});
 
-                        printf("process_read_property_ack: i: %d\n", i);
                         zeek::BifEvent::enqueue_bacnet_read_property_ack(connection()->zeek_analyzer(),
                                                                         connection()->zeek_analyzer()->Conn(),
                                                                         is_orig,
