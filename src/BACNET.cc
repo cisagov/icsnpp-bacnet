@@ -33,6 +33,8 @@ void BACNET_Analyzer::DeliverPacket(int len, const u_char* data, bool orig, uint
     }
     catch ( const binpac::Exception& e )
     {
+        printf("LOOK HERE WE HAVE AN EXCEPTION: Message: %s\n", e.c_msg());
+
         #if ZEEK_VERSION_NUMBER < 40200
         ProtocolViolation(zeek::util::fmt("Binpac exception: %s", e.c_msg()));
 

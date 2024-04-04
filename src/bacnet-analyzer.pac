@@ -251,7 +251,124 @@
 
     %}
 
+
 refine flow BACNET_Flow += {
+    %member{
+        vector<binpac::uint8> segmented_data_buffer;
+    %}
+
+    function process_service_request_tags(data: const_bytestring): BACnet_Tag[]
+        %{
+            vector<BACnet_Tag *> * service_request_tags_ = new vector<BACnet_Tag *>;
+            BACnet_Tag * service_request_tags__elem_;
+	        const_byteptr t_service_request_tags__elem__dataptr = &data[0];
+	        const_byteptr t_end_of_data = &data[data.length() - 1];
+	        int t_service_request_tags__elem__it = 0;
+            int t_byteorder = bigendian;
+
+            for (; ; ++t_service_request_tags__elem__it)
+            {
+                // Check &until(service_request_tags__elem__dataptr >= end_of_data)
+                if ( t_service_request_tags__elem__dataptr >= t_end_of_data )
+                {
+                    service_request_tags__elem_ = nullptr;
+                    goto end_of_service_request_tags;
+                }
+                service_request_tags__elem_ = new BACnet_Tag();
+                int t_service_request_tags__elem__size;
+                t_service_request_tags__elem__size = service_request_tags__elem_->Parse(t_service_request_tags__elem__dataptr, t_end_of_data, t_byteorder);
+                service_request_tags_->push_back(service_request_tags__elem_);
+                //printf("tag_header: %02x parsed size: %d\n", service_request_tags__elem_->tag_header(), t_service_request_tags__elem__size);
+                
+                /*
+                printf("%02x", service_request_tags__elem_->tag_header());
+                bytestring my_tag_data = service_request_tags__elem_->tag_data();
+                for(int i; i<my_tag_data.length(); i++) {
+                   printf("%02x", my_tag_data[i]);
+                }
+                printf("  ");
+                */
+
+
+                t_service_request_tags__elem__dataptr += t_service_request_tags__elem__size;
+                //BINPAC_ASSERT(t_service_request_tags__elem__dataptr <= t_end_of_data);
+                service_request_tags__elem_ = nullptr;
+            }
+            end_of_service_request_tags: ;
+
+            return service_request_tags_;
+
+            /*
+    int t_service_request_tags__arraylength;
+	t_service_request_tags__arraylength = 0;
+	service_request_tags__elem_ = nullptr;
+	int t_service_request_tags__elem__it;
+	t_service_request_tags__elem__it = 0;
+	int t_service_request_tags__size;
+	service_request_tags_ = new vector<BACnet_Tag *>;
+	const_byteptr t_service_request_tags__elem__dataptr = (t_dataptr_after_proposed_window + 1);
+	for (; ; ++t_service_request_tags__elem__it)
+		{
+		// Check &until(service_request_tags__elem__dataptr >= end_of_data)
+		if ( t_service_request_tags__elem__dataptr >= t_end_of_data )
+			{
+			service_request_tags__elem_ = nullptr;
+			goto end_of_service_request_tags;
+			}
+		service_request_tags__elem_ = new BACnet_Tag();
+		int t_service_request_tags__elem__size;
+		t_service_request_tags__elem__size = service_request_tags__elem_->Parse(t_service_request_tags__elem__dataptr, t_end_of_data, t_byteorder);
+		service_request_tags_->push_back(service_request_tags__elem_);
+		t_service_request_tags__elem__dataptr += t_service_request_tags__elem__size;
+		BINPAC_ASSERT(t_service_request_tags__elem__dataptr <= t_end_of_data);
+		service_request_tags__elem_ = nullptr;
+		}
+end_of_service_request_tags: ;
+	t_service_request_tags__size = t_service_request_tags__elem__dataptr - ((t_dataptr_after_proposed_window + 1));
+	// Evaluate 'let' and 'withinput' fields
+*/
+
+/*
+            printf("LOOK HERE - we made it: \n");
+            for(int i; i<data.length(); i++) {
+               printf("%02x", data[i]);
+            }
+            printf("\n");
+
+            return service_request_tags_;
+*/
+        %}
+
+    function buffer_service_request_tags(data: const_bytestring): const_bytestring
+        %{
+            for(int i=0; i<data.length(); i++) {
+                segmented_data_buffer.push_back(data[i]);
+            }
+
+            return const_bytestring(segmented_data_buffer.data(), segmented_data_buffer.size());
+            
+            /*
+            service_request_tags_ = new vector<BACnet_Tag *>;
+	        const_byteptr t_service_request_tags__elem__dataptr = (t_dataptr_after_proposed_window + 1);
+	        for (; ; ++t_service_request_tags__elem__it)
+		        {
+		        // Check &until(service_request_tags__elem__dataptr >= end_of_data)
+		        if ( t_service_request_tags__elem__dataptr >= t_end_of_data )
+			        {
+			        service_request_tags__elem_ = nullptr;
+			        goto end_of_service_request_tags;
+			        }
+		        service_request_tags__elem_ = new BACnet_Tag();
+		        int t_service_request_tags__elem__size;
+		        t_service_request_tags__elem__size = service_request_tags__elem_->Parse(t_service_request_tags__elem__dataptr, t_end_of_data, t_byteorder);
+		        service_request_tags_->push_back(service_request_tags__elem_);
+		        t_service_request_tags__elem__dataptr += t_service_request_tags__elem__size;
+		        BINPAC_ASSERT(t_service_request_tags__elem__dataptr <= t_end_of_data);
+		        service_request_tags__elem_ = nullptr;
+		        }
+            */
+
+        %}
 
     ###################################################################################################
     ##################################### GENERAL BACNET MESSAGE ######################################
@@ -2348,6 +2465,7 @@ refine flow BACNET_Flow += {
         %{
             if ( ::bacnet_read_property_ack )
             {
+                printf("process_read_property_ack: tags->size(): %ld\n", ${tags}->size());
                 if ( ${tags}->size() > 2 )
                 {
                     BACnetObjectIdentifier object_identifier = {${tags[0].tag_data}};
@@ -2356,28 +2474,31 @@ refine flow BACNET_Flow += {
 
                     uint8 i = 2;
 
-                    if(${tags[i].tag_num} == 2)
-                    {
-                        property_array_index = get_unsigned(${tags[i].tag_data});
+                    while (i < ${tags}->size()) {
+                        if(${tags[i].tag_num} == 2)
+                        {
+                            property_array_index = get_unsigned(${tags[i].tag_data});
+                            i += 1;
+                        }
                         i += 1;
-                    }
-                    i += 1;
 
-                    string property_value = "";
+                        string property_value = "";
                     
-                    if ( ${tags}->size() >= i )
-                        property_value = parse_tag(${tags[i].tag_num},${tags[i].tag_class},${tags[i].tag_data},${tags[i].tag_length},${tags[i].tag_length_a});
+                        if ( ${tags}->size() >= i )
+                            property_value = parse_tag(${tags[i].tag_num},${tags[i].tag_class},${tags[i].tag_data},${tags[i].tag_length},${tags[i].tag_length_a});
 
-                    zeek::BifEvent::enqueue_bacnet_read_property_ack(connection()->zeek_analyzer(),
-                                                                    connection()->zeek_analyzer()->Conn(),
-                                                                    is_orig,
-                                                                    invoke_id,
-                                                                    zeek::make_intrusive<zeek::StringVal>("read-property-ack"),
-                                                                    object_identifier.object_type,
-                                                                    object_identifier.instance_number,
-                                                                    property_identifier,
-                                                                    property_array_index,
-                                                                    zeek::make_intrusive<zeek::StringVal>(property_value));
+                        printf("process_read_property_ack: i: %d\n", i);
+                        zeek::BifEvent::enqueue_bacnet_read_property_ack(connection()->zeek_analyzer(),
+                                                                        connection()->zeek_analyzer()->Conn(),
+                                                                        is_orig,
+                                                                        invoke_id,
+                                                                        zeek::make_intrusive<zeek::StringVal>("read-property-ack"),
+                                                                        object_identifier.object_type,
+                                                                        object_identifier.instance_number,
+                                                                        property_identifier,
+                                                                        property_array_index,
+                                                                        zeek::make_intrusive<zeek::StringVal>(property_value));
+                    }
                 }
             }
             return true;
