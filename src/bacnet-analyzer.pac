@@ -259,47 +259,47 @@ refine flow BACNET_Flow += {
         vector<binpac::uint8> segmented_data_buffer;
     %}
 
-    function process_service_request_tags(data: const_bytestring): BACnet_Tag[]
+    function process_service_tags(data: const_bytestring): BACnet_Tag[]
         %{
             //
             // The code used to parse the bytestring data into a BACnet_Tag array
             // was taken directly from the build/bacnet.cc code which is the result
             // of "compiling" the bacnet-protocol.pac file.  Specifically, the binpac 
-            // code 'service_ack_tags : BACnet_Tag[] &until($input == 0);' ends up
+            // code 'service_tags : BACnet_Tag[] &until($input == 0);' ends up
             // as the following C code.
             //
-            vector<BACnet_Tag *> * service_request_tags_ = new vector<BACnet_Tag *>;
-            BACnet_Tag * service_request_tags__elem_;
-	        const_byteptr t_service_request_tags__elem__dataptr = &data[0];
+            vector<BACnet_Tag *> * service_tags_ = new vector<BACnet_Tag *>;
+            BACnet_Tag * service_tags__elem_;
+	        const_byteptr t_service_tags__elem__dataptr = &data[0];
 	        const_byteptr t_end_of_data = &data[data.length() - 1];
-	        int t_service_request_tags__elem__it = 0;
+	        int t_service_tags__elem__it = 0;
             int t_byteorder = bigendian;
 
-            for (; ; ++t_service_request_tags__elem__it)
+            for (; ; ++t_service_tags__elem__it)
             {
-                // Check &until(service_request_tags__elem__dataptr >= end_of_data)
-                if ( t_service_request_tags__elem__dataptr >= t_end_of_data )
+                // Check &until(service_tags__elem__dataptr >= end_of_data)
+                if ( t_service_tags__elem__dataptr >= t_end_of_data )
                 {
-                    service_request_tags__elem_ = nullptr;
-                    goto end_of_service_request_tags;
+                    service_tags__elem_ = nullptr;
+                    goto end_of_service_tags;
                 }
-                service_request_tags__elem_ = new BACnet_Tag();
-                int t_service_request_tags__elem__size;
-                t_service_request_tags__elem__size = service_request_tags__elem_->Parse(t_service_request_tags__elem__dataptr, t_end_of_data, t_byteorder);
-                service_request_tags_->push_back(service_request_tags__elem_);
+                service_tags__elem_ = new BACnet_Tag();
+                int t_service_tags__elem__size;
+                t_service_tags__elem__size = service_tags__elem_->Parse(t_service_tags__elem__dataptr, t_end_of_data, t_byteorder);
+                service_tags_->push_back(service_tags__elem_);
                 
-                t_service_request_tags__elem__dataptr += t_service_request_tags__elem__size;
-                BINPAC_ASSERT(t_service_request_tags__elem__dataptr <= t_end_of_data);
-                service_request_tags__elem_ = nullptr;
+                t_service_tags__elem__dataptr += t_service_tags__elem__size;
+                BINPAC_ASSERT(t_service_tags__elem__dataptr <= t_end_of_data);
+                service_tags__elem_ = nullptr;
             }
 
-            end_of_service_request_tags: ;
+            end_of_service_tags: ;
 
-            return service_request_tags_;
+            return service_tags_;
 
         %}
 
-    function buffer_service_request_tags(data: const_bytestring): const_bytestring
+    function buffer_service_tags(data: const_bytestring): const_bytestring
         %{
             for(int i=0; i<data.length(); i++) {
                 segmented_data_buffer.push_back(data[i]);
