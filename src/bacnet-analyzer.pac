@@ -255,7 +255,11 @@
 refine flow BACNET_Flow += {
 
     %member{
-        // Vector to hold segmented data
+        //
+        // Vector of uint8 that holds segmented data.  This is the underlying/backing structure
+        // for the const_bytestring that gets passed between the buffer_service_tags function
+        // and the process_service_tags function via the Binpac $context.flow.
+        // 
         vector<binpac::uint8> segmented_data_buffer;
     %}
 
@@ -294,6 +298,9 @@ refine flow BACNET_Flow += {
             }
 
             end_of_service_tags: ;
+
+            // Clear the underlying buffer
+            segmented_data_buffer.clear();
 
             return service_tags_;
 
