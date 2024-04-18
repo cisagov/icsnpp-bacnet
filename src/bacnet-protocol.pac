@@ -517,7 +517,7 @@ type Confirmed_Request_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: uint
 } &let {
     is_segmented: bool = ((choice_tag & 0x8) >> 3);
     more_follows: bool = ((choice_tag & 0x4) >> 2);
-    service_tag_buffer: const_bytestring = $context.flow.buffer_service_tags(service_tag_data);
+    service_tag_buffer: const_bytestring = $context.flow.buffer_service_tags(service_tag_data, more_follows);
     service_request_tags: BACnet_Tag[] = $context.flow.process_service_tags(service_tag_buffer) &if (more_follows == 0) ;
 
     deliver: bool = case service_choice of {
@@ -669,7 +669,7 @@ type Complex_ACK_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: uint8)   =
 } &let {
     is_segmented: bool = ((choice_tag & 0x8) >> 3);
     more_follows: bool = ((choice_tag & 0x4) >> 2);
-    service_tag_buffer: const_bytestring = $context.flow.buffer_service_tags(service_tag_data);
+    service_tag_buffer: const_bytestring = $context.flow.buffer_service_tags(service_tag_data, more_follows);
     service_ack_tags: BACnet_Tag[] = $context.flow.process_service_tags(service_tag_buffer) &if (more_follows == 0) ;
 
     deliver: bool = case service_choice of {

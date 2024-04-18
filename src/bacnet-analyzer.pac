@@ -306,10 +306,19 @@ refine flow BACNET_Flow += {
 
         %}
 
-    function buffer_service_tags(data: const_bytestring): const_bytestring
+    function buffer_service_tags(data: const_bytestring, more_follows: bool): const_bytestring
         %{
             for(int i=0; i<data.length(); i++) {
                 segmented_data_buffer.push_back(data[i]);
+            }
+
+            // Due to what I believe is a bug with how the Binpac implementation handles &restofdata,
+            // a null byte needs to be appended to the end of the segmented_data_buffer.  Given Binpac
+            // is no longer supported, it's a non starter to submit a bug report.  We'll just "fix it"
+            // here and be on our way.
+            if (more_follows == 0) {
+                uint8 null_byte = 0x00;
+                segmented_data_buffer.push_back(null_byte);
             }
 
             return const_bytestring(segmented_data_buffer.data(), segmented_data_buffer.size());
