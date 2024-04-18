@@ -554,7 +554,7 @@ type Confirmed_Request_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: uint
         default                         -> false;
     } &if (more_follows == 0);
     pdu_type: uint8 = choice_tag >> 4;
-    overview: bool = $context.flow.process_bacnet_apdu_header(is_orig, bvlc_function, pdu_type, service_choice, invoke_id, 0);
+    overview: bool = $context.flow.process_bacnet_apdu_header(is_orig, bvlc_function, pdu_type, service_choice, invoke_id, 0) &if (more_follows == 0);
 };
 
 ## ------------------------------------Unconfirmed-Request-PDU-------------------------------------
@@ -689,9 +689,9 @@ type Complex_ACK_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: uint8)   =
         READ_RANGE                      -> $context.flow.process_read_range_ack(is_orig, invoke_id, service_ack_tags);
         GET_EVENT_INFORMATION           -> $context.flow.process_get_event_information_ack(is_orig, invoke_id, service_ack_tags);
         default                         -> false;
-    } &if (more_follows ==0);
+    } &if (more_follows == 0);
     pdu_type: uint8 = choice_tag >> 4;
-    overview: bool = $context.flow.process_bacnet_apdu_header(is_orig, bvlc_function, pdu_type, service_choice, invoke_id, 0) &if (more_follows ==0);
+    overview: bool = $context.flow.process_bacnet_apdu_header(is_orig, bvlc_function, pdu_type, service_choice, invoke_id, 0) &if (more_follows == 0);
 };
 
 ## ----------------------------------------Segment-ACK-PDU-----------------------------------------
