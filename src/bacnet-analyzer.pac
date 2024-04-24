@@ -2423,23 +2423,20 @@ refine flow BACNET_Flow += {
                 {
                     BACnetObjectIdentifier object_identifier = {${tags[0].tag_data}};
                     uint32 property_identifier = get_unsigned(${tags[1].tag_data});
+
                     uint32 property_array_index = UINT32_MAX;
+                    if((${tags[2].tag_class} == 1) && (${tags[2].tag_num} == 2)) // Context tag (tag_class == 1)
+                    {
+                        property_array_index = get_unsigned(${tags[2].tag_data});
+                    }
 
-                    uint32 i = 2;
-
+                    uint32 i = 3;
                     while (i < ${tags}->size()) {
-                        if (${tags[i].tag_class} == 0) { // Application Tag Class
-
-                            if(${tags[i].tag_num} == 2)
-                            {
-                                property_array_index = get_unsigned(${tags[i].tag_data});
-                                i += 1;
-                            }
-
+                        if((${tags[i].named_tag} != OPENING) &&
+                            ${tags[i].named_tag} != CLOSING) 
+                        {
                             string property_value = "";
-                    
-                            if ( ${tags}->size() > i )
-                                property_value = parse_tag(${tags[i].tag_num},${tags[i].tag_class},${tags[i].tag_data},${tags[i].tag_length},${tags[i].tag_length_a});
+                            property_value = parse_tag(${tags[i].tag_num},${tags[i].tag_class},${tags[i].tag_data},${tags[i].tag_length},${tags[i].tag_length_a});
 
                             zeek::BifEvent::enqueue_bacnet_read_property_ack(connection()->zeek_analyzer(),
                                                                             connection()->zeek_analyzer()->Conn(),
