@@ -226,8 +226,7 @@ event bacnet_apdu_header(c: connection,
 event bacnet_npdu_header(c: connection,
                          is_orig: bool,
                          bvlc_function: count,
-                         npdu_message_type: count,
-                         destination_address: count){
+                         npdu_message_type: count){
 
     set_service(c);
     local bacnet_log: BACnet_Header;
@@ -254,7 +253,6 @@ event bacnet_npdu_header(c: connection,
 
     bacnet_log$pdu_type = "NPDU";
     bacnet_log$pdu_service = npdu_message_types[npdu_message_type];
-    bacnet_log$invoke_id = destination_address;
 
     Log::write(LOG_BACNET, bacnet_log);
 }
