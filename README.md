@@ -265,6 +265,22 @@ Modified configuration, only parses BACnet traffic on UDP/47808:
 @load ./files
 ```
 
+## Coverage
+
+See [Logging Capabilities](#logging-capabilities) for detailed information of the parser coverage.
+
+### General/Header Logging
+
+The general BACnet log file (bacnet.log) contains basic header information for all known (~100%) BACnet BVLC, NPDU, and APDU messages.
+
+### Detailed Logging
+
+There is currently no (0%) detailed logging for BVLC or NPDU messages.
+
+Detailed logging for the most popular 4 Unconfirmed-Services APDU messages are logged in the discovery log file (bacnet_discovery.log). The other, much less common, 6 Unconfirmed-Services APDU messages do not contain detailed logging, therefore 40% (4/10) of the Unconfirmed-Services APDU messages contain detailed logging.
+
+Detailed logging for 4 Confirmed-Services APDU messages are logged in the property log file (bacnet_property.log), 2 Confirmed-Services APDU messages are logged in the device control log file (bacnet_device_control.log), and 2 Confirmed-Services APDU messages are passed to Zeek's file extraction handler. The other 21 Confirmed-Services APDU messages do not contain detailed logging, therefore 30% (9/30) of the Confirmed-Services APDU messages contain detailed logging.
+
 ## ICSNPP Packages
 
 All ICSNPP Packages:
