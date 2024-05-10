@@ -50,8 +50,10 @@ export {
         destination_h           : addr      &log;   # Destination IP Address
         destination_p           : port      &log;   # Destination Port
         pdu_service             : string    &log;   # who-is, i-am, who-has, or i-have
+        device_id_type          : string    &log;   # BACnetObjectIdentifier device (see object_types)
+        device_id_number        : count     &log;   # BACnetObjectIdentifier device instance number
         object_type             : string    &log;   # BACnetObjectIdentifier object (see object_types)
-        instance_number         : count     &log;   # BACnetObjectIdentifier instance number
+        instance_number         : count     &log;   # BACnetObjectIdentifier object instance number
         vendor                  : string    &log;   # Vendor Name (i-am and i-have requests)
         range                   : string    &log;   # Specify range of devices to return (in who-is and who-has requests)
         object_name             : string    &log;   # Object name searching for (who-has) or responding with (i-have)
@@ -424,6 +426,12 @@ event bacnet_i_have(c: connection,
 
     bacnet_discovery$pdu_service = "i-have";
 
+    if(device_object_type != UINT32_MAX)
+        bacnet_discovery$device_id_type = object_types[device_object_type];
+
+    if(device_instance_num != UINT32_MAX)
+        bacnet_discovery$device_id_number = device_instance_num;
+           
     if(object_object_type != UINT32_MAX)
         bacnet_discovery$object_type = object_types[object_object_type];
 

@@ -167,8 +167,10 @@ This log captures important variables for Read-Property-Request, Read-Property-A
 | destination_p     | port      | Destination Port (see *Source and Destination Fields*)        |
 | invoke_id         | count     | Unique ID for all outstanding confirmed request/ACK APDUs     |
 | pdu_service       | string    | APDU service choice (read or write property services)         |
+| device_id_type    | string    | BACnet device's type                                          |
+| device_id_number  | count     | BACnet device's instance number                               |
 | object_type       | string    | BACnet device's object type                                   |
-| instance_number   | count     | BACnet device's instance number                               |
+| instance_number   | count     | BACnet device's object instance number                        |
 | property          | string    | Property type                                                 |
 | array_index       | count     | Property array index                                          |
 | value             | string    | Value of property                                             |
