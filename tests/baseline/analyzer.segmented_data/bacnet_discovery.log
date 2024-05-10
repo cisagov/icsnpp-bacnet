@@ -5,17 +5,17 @@
 #unset_field	-
 #path	bacnet_discovery
 #open XXXX-XX-XX-XX-XX-XX
-#fields	ts	uid	id.orig_h	id.orig_p	id.resp_h	id.resp_p	is_orig	source_h	source_p	destination_h	destination_p	pdu_service	object_type	instance_number	vendor	range	object_name
-#types	time	string	addr	port	addr	port	bool	addr	port	addr	port	string	string	count	string	string	string
-XXXXXXXXXX.XXXXXX	CHhAvVGS1DHFjwGM9	10.0.0.2	47808	10.0.0.255	47808	T	10.0.0.2	47808	10.0.0.255	47808	i-have	accumulator	4	-	-	(empty)
-XXXXXXXXXX.XXXXXX	ClEkJM2Vm5giqnMf4h	10.0.0.1	47808	10.0.0.255	47808	T	10.0.0.1	47808	10.0.0.255	47808	who-has	accumulator	5	-	All	N/A
-XXXXXXXXXX.XXXXXX	CHhAvVGS1DHFjwGM9	10.0.0.2	47808	10.0.0.255	47808	T	10.0.0.2	47808	10.0.0.255	47808	i-have	accumulator	5	-	-	(empty)
-XXXXXXXXXX.XXXXXX	ClEkJM2Vm5giqnMf4h	10.0.0.1	47808	10.0.0.255	47808	T	10.0.0.1	47808	10.0.0.255	47808	who-is	-	-	-	All	-
-XXXXXXXXXX.XXXXXX	ClEkJM2Vm5giqnMf4h	10.0.0.1	47808	10.0.0.255	47808	T	10.0.0.1	47808	10.0.0.255	47808	i-am	device	0	Unitec Corporation	-	-
-XXXXXXXXXX.XXXXXX	CHhAvVGS1DHFjwGM9	10.0.0.2	47808	10.0.0.255	47808	T	10.0.0.2	47808	10.0.0.255	47808	i-am	device	254	Unitec Corporation	-	-
-XXXXXXXXXX.XXXXXX	ClEkJM2Vm5giqnMf4h	10.0.0.1	47808	10.0.0.255	47808	T	10.0.0.1	47808	10.0.0.255	47808	i-am	device	0	Unitec Corporation	-	-
-XXXXXXXXXX.XXXXXX	C4J4Th3PJpwUYZZ6gc	10.0.0.2	47808	10.0.0.1	47808	T	10.0.0.2	47808	10.0.0.1	47808	i-am	device	254	Unitec Corporation	-	-
-XXXXXXXXXX.XXXXXX	ClEkJM2Vm5giqnMf4h	10.0.0.1	47808	10.0.0.255	47808	T	10.0.0.1	47808	10.0.0.255	47808	i-am	device	0	Unitec Corporation	-	-
-XXXXXXXXXX.XXXXXX	C4J4Th3PJpwUYZZ6gc	10.0.0.2	47808	10.0.0.1	47808	T	10.0.0.2	47808	10.0.0.1	47808	i-am	device	254	Unitec Corporation	-	-
-XXXXXXXXXX.XXXXXX	ClEkJM2Vm5giqnMf4h	10.0.0.1	47808	10.0.0.255	47808	T	10.0.0.1	47808	10.0.0.255	47808	i-am	device	0	Unitec Corporation	-	-
+#fields	ts	uid	id.orig_h	id.orig_p	id.resp_h	id.resp_p	is_orig	source_h	source_p	destination_h	destination_p	pdu_service	device_id_type	device_id_number	object_type	instance_number	vendor	range	object_name
+#types	time	string	addr	port	addr	port	bool	addr	port	addr	port	string	string	count	string	count	string	string	string
+XXXXXXXXXX.XXXXXX	CHhAvVGS1DHFjwGM9	10.0.0.2	47808	10.0.0.255	47808	T	10.0.0.2	47808	10.0.0.255	47808	i-have	device	254	accumulator	4	-	-	(empty)
+XXXXXXXXXX.XXXXXX	ClEkJM2Vm5giqnMf4h	10.0.0.1	47808	10.0.0.255	47808	T	10.0.0.1	47808	10.0.0.255	47808	who-has	-	-	accumulator	5	-	All	N/A
+XXXXXXXXXX.XXXXXX	CHhAvVGS1DHFjwGM9	10.0.0.2	47808	10.0.0.255	47808	T	10.0.0.2	47808	10.0.0.255	47808	i-have	device	254	accumulator	5	-	-	(empty)
+XXXXXXXXXX.XXXXXX	ClEkJM2Vm5giqnMf4h	10.0.0.1	47808	10.0.0.255	47808	T	10.0.0.1	47808	10.0.0.255	47808	who-is	-	-	-	-	-	All	-
+XXXXXXXXXX.XXXXXX	ClEkJM2Vm5giqnMf4h	10.0.0.1	47808	10.0.0.255	47808	T	10.0.0.1	47808	10.0.0.255	47808	i-am	-	-	device	0	Unitec Corporation	-	-
+XXXXXXXXXX.XXXXXX	CHhAvVGS1DHFjwGM9	10.0.0.2	47808	10.0.0.255	47808	T	10.0.0.2	47808	10.0.0.255	47808	i-am	-	-	device	254	Unitec Corporation	-	-
+XXXXXXXXXX.XXXXXX	ClEkJM2Vm5giqnMf4h	10.0.0.1	47808	10.0.0.255	47808	T	10.0.0.1	47808	10.0.0.255	47808	i-am	-	-	device	0	Unitec Corporation	-	-
+XXXXXXXXXX.XXXXXX	C4J4Th3PJpwUYZZ6gc	10.0.0.2	47808	10.0.0.1	47808	T	10.0.0.2	47808	10.0.0.1	47808	i-am	-	-	device	254	Unitec Corporation	-	-
+XXXXXXXXXX.XXXXXX	ClEkJM2Vm5giqnMf4h	10.0.0.1	47808	10.0.0.255	47808	T	10.0.0.1	47808	10.0.0.255	47808	i-am	-	-	device	0	Unitec Corporation	-	-
+XXXXXXXXXX.XXXXXX	C4J4Th3PJpwUYZZ6gc	10.0.0.2	47808	10.0.0.1	47808	T	10.0.0.2	47808	10.0.0.1	47808	i-am	-	-	device	254	Unitec Corporation	-	-
+XXXXXXXXXX.XXXXXX	ClEkJM2Vm5giqnMf4h	10.0.0.1	47808	10.0.0.255	47808	T	10.0.0.1	47808	10.0.0.255	47808	i-am	-	-	device	0	Unitec Corporation	-	-
 #close XXXX-XX-XX-XX-XX-XX
