@@ -251,7 +251,78 @@
 
     %}
 
+
 refine flow BACNET_Flow += {
+
+    %member{
+        //
+        // Vector of uint8 that holds segmented data.  This is the underlying/backing structure
+        // for the const_bytestring that gets passed between the buffer_service_tags function
+        // and the process_service_tags function via the Binpac $context.flow.
+        // 
+        vector<binpac::uint8> segmented_data_buffer;
+    %}
+
+    function process_service_tags(data: const_bytestring): BACnet_Tag[]
+        %{
+            //
+            // The code used to parse the bytestring data into a BACnet_Tag array
+            // was taken directly from the build/bacnet.cc code which is the result
+            // of "compiling" the bacnet-protocol.pac file.  Specifically, the binpac 
+            // code 'service_tags : BACnet_Tag[] &until($input == 0);' ends up
+            // as the following C code.
+            //
+            vector<BACnet_Tag *> * service_tags_ = new vector<BACnet_Tag *>;
+            BACnet_Tag * service_tags__elem_;
+	        const_byteptr t_service_tags__elem__dataptr = &data[0];
+	        const_byteptr t_end_of_data = &data[data.length() - 1];
+	        int t_service_tags__elem__it = 0;
+            int t_byteorder = bigendian;
+
+            for (; ; ++t_service_tags__elem__it)
+            {
+                // Check &until(service_tags__elem__dataptr >= end_of_data)
+                if ( t_service_tags__elem__dataptr >= t_end_of_data )
+                {
+                    service_tags__elem_ = nullptr;
+                    goto end_of_service_tags;
+                }
+                service_tags__elem_ = new BACnet_Tag();
+                int t_service_tags__elem__size;
+                t_service_tags__elem__size = service_tags__elem_->Parse(t_service_tags__elem__dataptr, t_end_of_data, t_byteorder);
+                service_tags_->push_back(service_tags__elem_);
+                
+                t_service_tags__elem__dataptr += t_service_tags__elem__size;
+                BINPAC_ASSERT(t_service_tags__elem__dataptr <= t_end_of_data);
+                service_tags__elem_ = nullptr;
+            }
+
+            end_of_service_tags: ;
+
+            // Clear the underlying buffer
+            segmented_data_buffer.clear();
+
+            return service_tags_;
+
+        %}
+
+    function buffer_service_tags(data: const_bytestring, more_follows: bool): const_bytestring
+        %{
+            for(int i=0; i<data.length(); i++) {
+                segmented_data_buffer.push_back(data[i]);
+            }
+
+            // Due to what I believe is a bug with how the Binpac implementation handles &restofdata,
+            // a null byte needs to be appended to the end of the segmented_data_buffer.  Given Binpac
+            // is no longer supported, it's a non starter to submit a bug report.  We'll just "fix it"
+            // here and be on our way.
+            if (more_follows == 0) {
+                uint8 null_byte = 0x00;
+                segmented_data_buffer.push_back(null_byte);
+            }
+
+            return const_bytestring(segmented_data_buffer.data(), segmented_data_buffer.size());
+        %}
 
     ###################################################################################################
     ##################################### GENERAL BACNET MESSAGE ######################################
@@ -322,10 +393,8 @@ refine flow BACNET_Flow += {
     ##          + Matches bvlc_functions in consts.zeek
     ##      - npdu_message_type   -> NPDU Message Type
     ##          + Matches npdu_message_types in consts.zeek
-    ##      - destination_address -> NPDU Destination Network Address
-    ##          + destination network address for NPDU packet
     ## ------------------------------------------------------------------------------------------------
-    function process_bacnet_npdu_header(is_orig: bool, bvlc_function: uint8, npdu_message_type: uint8, destination_address: uint16): bool
+    function process_bacnet_npdu_header(is_orig: bool, bvlc_function: uint8, npdu_message_type: uint8): bool
         %{
             if ( ::bacnet_npdu_header )
             {
@@ -333,8 +402,7 @@ refine flow BACNET_Flow += {
                                                            connection()->zeek_analyzer()->Conn(),
                                                            is_orig,
                                                            bvlc_function,
-                                                           npdu_message_type,
-                                                           destination_address);
+                                                           npdu_message_type);
             }
             return true;
         %}
@@ -2352,32 +2420,34 @@ refine flow BACNET_Flow += {
                 {
                     BACnetObjectIdentifier object_identifier = {${tags[0].tag_data}};
                     uint32 property_identifier = get_unsigned(${tags[1].tag_data});
+
                     uint32 property_array_index = UINT32_MAX;
-
-                    uint8 i = 2;
-
-                    if(${tags[i].tag_num} == 2)
+                    if((${tags[2].tag_class} == 1) && (${tags[2].tag_num} == 2)) // Context tag (tag_class == 1)
                     {
-                        property_array_index = get_unsigned(${tags[i].tag_data});
+                        property_array_index = get_unsigned(${tags[2].tag_data});
+                    }
+
+                    uint32 i = 3;
+                    while (i < ${tags}->size()) {
+                        if((${tags[i].named_tag} != OPENING) &&
+                            ${tags[i].named_tag} != CLOSING) 
+                        {
+                            string property_value = "";
+                            property_value = parse_tag(${tags[i].tag_num},${tags[i].tag_class},${tags[i].tag_data},${tags[i].tag_length},${tags[i].tag_length_a});
+
+                            zeek::BifEvent::enqueue_bacnet_read_property_ack(connection()->zeek_analyzer(),
+                                                                            connection()->zeek_analyzer()->Conn(),
+                                                                            is_orig,
+                                                                            invoke_id,
+                                                                            zeek::make_intrusive<zeek::StringVal>("read-property-ack"),
+                                                                            object_identifier.object_type,
+                                                                            object_identifier.instance_number,
+                                                                            property_identifier,
+                                                                            property_array_index,
+                                                                            zeek::make_intrusive<zeek::StringVal>(property_value));
+                        }
                         i += 1;
                     }
-                    i += 1;
-
-                    string property_value = "";
-                    
-                    if ( ${tags}->size() >= i )
-                        property_value = parse_tag(${tags[i].tag_num},${tags[i].tag_class},${tags[i].tag_data},${tags[i].tag_length},${tags[i].tag_length_a});
-
-                    zeek::BifEvent::enqueue_bacnet_read_property_ack(connection()->zeek_analyzer(),
-                                                                    connection()->zeek_analyzer()->Conn(),
-                                                                    is_orig,
-                                                                    invoke_id,
-                                                                    zeek::make_intrusive<zeek::StringVal>("read-property-ack"),
-                                                                    object_identifier.object_type,
-                                                                    object_identifier.instance_number,
-                                                                    property_identifier,
-                                                                    property_array_index,
-                                                                    zeek::make_intrusive<zeek::StringVal>(property_value));
                 }
             }
             return true;

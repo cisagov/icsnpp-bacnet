@@ -366,16 +366,16 @@ type NPDU_Header(is_orig: bool, bvlc_function: uint8) = record {
 ## Message Description:
 ##      Network Layer Protocol Messages
 ## Message Format:
-##      - NPDU Message Type:           1 byte   -> Message Type (see npdu_message_types in consts.zeek)
-##      - Destination Network Address  2 bytes  -> NPDU Destination Network Address
+##      - NPDU Message Type:           1 byte     -> Message Type (see npdu_message_types in consts.zeek)
+##      - Destination Network Address  bytestring -> NPDU Destination Network Address.  Currently not used.
 ## Protocol Parsing:
 ##      Logs BVLC Function, NPDU Message Type, and Destination Network Address to bacnet.log
 ## ------------------------------------------------------------------------------------------------
 type NPDU_Message(is_orig: bool, bvlc_function: uint8) = record {
     npdu_message_type   : uint8;
-    destination_address : uint16;
+    destination_address : bytestring &restofdata;
 } &let {
-    overview: bool = $context.flow.process_bacnet_npdu_header(is_orig, bvlc_function, npdu_message_type, destination_address);
+    overview: bool = $context.flow.process_bacnet_npdu_header(is_orig, bvlc_function, npdu_message_type);
 };
 
 ## ----------------------------------------NPDU-Destination----------------------------------------
@@ -512,9 +512,14 @@ type Confirmed_Request_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: uint
         1       -> proposed_window_value:   uint8;
         default -> no_proposed_window:      empty;
     };
-    service_choice          : uint8 &enforce(service_choice <= 0x1d);
-    service_request_tags    : BACnet_Tag[] &until($input.length() == 0);
+    service_choice   : uint8 &enforce(service_choice <= 0x1d);
+    service_tag_data : bytestring &restofdata;
 } &let {
+    is_segmented: bool = ((choice_tag & 0x8) >> 3);
+    more_follows: bool = ((choice_tag & 0x4) >> 2);
+    service_tag_buffer: const_bytestring = $context.flow.buffer_service_tags(service_tag_data, more_follows);
+    service_request_tags: BACnet_Tag[] = $context.flow.process_service_tags(service_tag_buffer) &if (more_follows == 0) ;
+
     deliver: bool = case service_choice of {
         ACKNOWLEDGE_ALARM               -> $context.flow.process_acknowledge_alarm(is_orig, invoke_id, service_request_tags);
         CONFIRMED_COV_NOTIFICATION      -> $context.flow.process_confirmed_cov_notification(is_orig, invoke_id, service_request_tags);
@@ -547,9 +552,9 @@ type Confirmed_Request_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: uint
         SUBSCRIBE_COV_PROPERTY          -> $context.flow.process_subscribe_cov_property(is_orig, invoke_id, service_request_tags);
         GET_EVENT_INFORMATION           -> $context.flow.process_get_event_information(is_orig, invoke_id, service_request_tags);
         default                         -> false;
-    };
+    } &if (more_follows == 0);
     pdu_type: uint8 = choice_tag >> 4;
-    overview: bool = $context.flow.process_bacnet_apdu_header(is_orig, bvlc_function, pdu_type, service_choice, invoke_id, 0);
+    overview: bool = $context.flow.process_bacnet_apdu_header(is_orig, bvlc_function, pdu_type, service_choice, invoke_id, 0) &if (more_follows == 0);
 };
 
 ## ------------------------------------Unconfirmed-Request-PDU-------------------------------------
@@ -659,9 +664,14 @@ type Complex_ACK_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: uint8)   =
         1       -> proposed_window_value:   uint8;
         default -> no_proposed_window:      empty;
     };
-    service_choice      : uint8 &enforce(service_choice <= 0x1d);
-    service_ack_tags    : BACnet_Tag[] &until($input == 0);
+    service_choice   : uint8 &enforce(service_choice <= 0x1d);
+    service_tag_data : bytestring &restofdata;
 } &let {
+    is_segmented: bool = ((choice_tag & 0x8) >> 3);
+    more_follows: bool = ((choice_tag & 0x4) >> 2);
+    service_tag_buffer: const_bytestring = $context.flow.buffer_service_tags(service_tag_data, more_follows);
+    service_ack_tags: BACnet_Tag[] = $context.flow.process_service_tags(service_tag_buffer) &if (more_follows == 0) ;
+
     deliver: bool = case service_choice of {
         GET_ALARM_SUMMARY               -> $context.flow.process_get_alarm_summary_ack(is_orig, invoke_id, service_ack_tags);
         GET_ENROLLMENT_SUMMARY          -> $context.flow.process_get_enrollment_summary_ack(is_orig, invoke_id, service_ack_tags);
@@ -679,9 +689,9 @@ type Complex_ACK_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: uint8)   =
         READ_RANGE                      -> $context.flow.process_read_range_ack(is_orig, invoke_id, service_ack_tags);
         GET_EVENT_INFORMATION           -> $context.flow.process_get_event_information_ack(is_orig, invoke_id, service_ack_tags);
         default                         -> false;
-    };
+    } &if (more_follows == 0);
     pdu_type: uint8 = choice_tag >> 4;
-    overview: bool = $context.flow.process_bacnet_apdu_header(is_orig, bvlc_function, pdu_type, service_choice, invoke_id, 0);
+    overview: bool = $context.flow.process_bacnet_apdu_header(is_orig, bvlc_function, pdu_type, service_choice, invoke_id, 0) &if (more_follows == 0);
 };
 
 ## ----------------------------------------Segment-ACK-PDU-----------------------------------------
