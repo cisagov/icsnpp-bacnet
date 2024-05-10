@@ -393,10 +393,8 @@ refine flow BACNET_Flow += {
     ##          + Matches bvlc_functions in consts.zeek
     ##      - npdu_message_type   -> NPDU Message Type
     ##          + Matches npdu_message_types in consts.zeek
-    ##      - destination_address -> NPDU Destination Network Address
-    ##          + destination network address for NPDU packet
     ## ------------------------------------------------------------------------------------------------
-    function process_bacnet_npdu_header(is_orig: bool, bvlc_function: uint8, npdu_message_type: uint8, destination_address: uint16): bool
+    function process_bacnet_npdu_header(is_orig: bool, bvlc_function: uint8, npdu_message_type: uint8): bool
         %{
             if ( ::bacnet_npdu_header )
             {
@@ -404,8 +402,7 @@ refine flow BACNET_Flow += {
                                                            connection()->zeek_analyzer()->Conn(),
                                                            is_orig,
                                                            bvlc_function,
-                                                           npdu_message_type,
-                                                           destination_address);
+                                                           npdu_message_type);
             }
             return true;
         %}
