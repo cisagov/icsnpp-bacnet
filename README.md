@@ -141,6 +141,8 @@ This log captures important fields for Who-Is, I-Am, Who-Has, and I-Have message
 | destination_h     | address   | Destination IP address (see *Source and Destination Fields*)    |
 | destination_p     | port      | Destination Port (see *Source and Destination Fields*)          |
 | pdu_service       | string    | APDU service choice (who-is, i-am, who-has, or i-have)          |
+| device_id_type    | string    | BACnet device's type                                          |
+| device_id_number  | count     | BACnet device's instance number                               |
 | object_type       | string    | BACnet device's object type                                     |
 | instance_number   | count     | BACnet device's instance number                                 |
 | vendor            | string    | BACnet device's vendor name                                     |
@@ -167,8 +169,6 @@ This log captures important variables for Read-Property-Request, Read-Property-A
 | destination_p     | port      | Destination Port (see *Source and Destination Fields*)        |
 | invoke_id         | count     | Unique ID for all outstanding confirmed request/ACK APDUs     |
 | pdu_service       | string    | APDU service choice (read or write property services)         |
-| device_id_type    | string    | BACnet device's type                                          |
-| device_id_number  | count     | BACnet device's instance number                               |
 | object_type       | string    | BACnet device's object type                                   |
 | instance_number   | count     | BACnet device's object instance number                        |
 | property          | string    | Property type                                                 |
