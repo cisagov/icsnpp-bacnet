@@ -2761,27 +2761,4 @@ refine flow BACNET_Flow += {
     ###################################################################################################
     ####################################### END OF COMPLEX ACKS #######################################
     ###################################################################################################
-
-    function empty_tag_list(): BACnet_Tag[]
-        %{
-            return new vector<BACnet_Tag*>;
-        %}
-
-    # Returns a BACnet_Tag array. If more_follows == 0 (final segment), the buffer is
-    # completed and parsed. Otherwise, we just buffer the data and return an empty list so
-    # that the generated C++ always has a valid vector pointer (avoiding destructor asserts).
-    function compute_service_tags(data: const_bytestring, more_follows: bool): BACnet_Tag[]
-        %{
-            if ( more_follows == 0 )
-            {
-                // Final segment – append terminator in buffer_service_tags and parse.
-                return process_service_tags(buffer_service_tags(data, 0));
-            }
-            else
-            {
-                // Intermediate segment – buffer the bytes and return an empty tag list.
-                buffer_service_tags(data, more_follows);
-                return empty_tag_list();
-            }
-        %}
 };
