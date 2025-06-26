@@ -1884,7 +1884,7 @@ refine flow BACNET_Flow += {
     ##      - Service Parameters:   list    -> Optional
     ##          + Conveys additional parameters for services specified from Vendor Id and Service Number
     ##  Confirmed-Private-Transfer Event Generation:
-    ##      - vendor_id             -> Vendor ID
+    ##      - vendor_id             -> Vendor ID code
     ##      - service_number        -> Service Number
     ## ------------------------------------------------------------------------------------------------
     function process_confirmed_private_transfer(is_orig: bool, invoke_id: uint8, tags: BACnet_Tag[]): bool
