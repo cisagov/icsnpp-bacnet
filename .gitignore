@@ -1,1 +1,30 @@
+# Development Machine Files
+.*.swp
+*~
+*.bak
+*.DS_Store
+.~lock.*#
+.vscode/
+
+# Parsnip/Zeek Output Files
+*.svg
+*cycles.txt
+*.log
+*.hlto
+
+# Zeek Test Files
+testing/.tmp/
+testing/.btest.failed.dat
+testing/*.log
+testing/tools/*.pcap
+__pycache__/
+
+# Build Files
 build/
+
+# Don't ignore baseline log files
+!testing/Baseline/*/*.log
+
+# Misc
+*stub.spicy
+.inst.txt
