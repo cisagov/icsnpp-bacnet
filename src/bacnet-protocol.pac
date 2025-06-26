@@ -671,6 +671,7 @@ type Complex_ACK_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: uint8)   =
     more_follows: bool = ((choice_tag & 0x4) >> 2);
     service_tag_buffer: const_bytestring = $context.flow.buffer_service_tags(service_tag_data, more_follows);
     service_ack_tags: BACnet_Tag[] = $context.flow.process_service_tags(service_tag_buffer) &if (more_follows == 0) ;
+
     deliver: bool = case service_choice of {
         GET_ALARM_SUMMARY               -> $context.flow.process_get_alarm_summary_ack(is_orig, invoke_id, service_ack_tags);
         GET_ENROLLMENT_SUMMARY          -> $context.flow.process_get_enrollment_summary_ack(is_orig, invoke_id, service_ack_tags);
