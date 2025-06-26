@@ -517,9 +517,10 @@ type Confirmed_Request_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: uint
 } &let {
     is_segmented: bool = ((choice_tag & 0x8) >> 3);
     more_follows: bool = ((choice_tag & 0x4) >> 2);
+    # NOTE: service_tag_buffer is retained for backward-compatibility with older Zeek scripts.
     service_tag_buffer: const_bytestring = $context.flow.buffer_service_tags(service_tag_data, more_follows);
-    service_request_tags: BACnet_Tag[] = $context.flow.process_service_tags(service_tag_buffer) &if (more_follows == 0) ;
-
+    # Parse tags only when this is the final segment.
+    service_request_tags: BACnet_Tag[] = $context.flow.process_service_tags(service_tag_buffer) &if (more_follows == 0);
     deliver: bool = case service_choice of {
         ACKNOWLEDGE_ALARM               -> $context.flow.process_acknowledge_alarm(is_orig, invoke_id, service_request_tags);
         CONFIRMED_COV_NOTIFICATION      -> $context.flow.process_confirmed_cov_notification(is_orig, invoke_id, service_request_tags);
@@ -669,25 +670,26 @@ type Complex_ACK_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: uint8)   =
 } &let {
     is_segmented: bool = ((choice_tag & 0x8) >> 3);
     more_follows: bool = ((choice_tag & 0x4) >> 2);
+    # NOTE: service_tag_buffer is retained for backward-compatibility with older Zeek scripts.
     service_tag_buffer: const_bytestring = $context.flow.buffer_service_tags(service_tag_data, more_follows);
-    service_ack_tags: BACnet_Tag[] = $context.flow.process_service_tags(service_tag_buffer) &if (more_follows == 0) ;
-
+    # Parse tags only when this is the final segment.
+    service_request_tags: BACnet_Tag[] = $context.flow.process_service_tags(service_tag_buffer) &if (more_follows == 0);
     deliver: bool = case service_choice of {
-        GET_ALARM_SUMMARY               -> $context.flow.process_get_alarm_summary_ack(is_orig, invoke_id, service_ack_tags);
-        GET_ENROLLMENT_SUMMARY          -> $context.flow.process_get_enrollment_summary_ack(is_orig, invoke_id, service_ack_tags);
-        ATOMIC_READ_FILE                -> $context.flow.process_atomic_read_file_ack(is_orig, invoke_id, service_ack_tags);
-        ATOMIC_WRITE_FILE               -> $context.flow.process_atomic_write_file_ack(is_orig, invoke_id, service_ack_tags);
-        CREATE_OBJECT                   -> $context.flow.process_create_object_ack(is_orig, invoke_id, service_ack_tags);
-        READ_PROPERTY                   -> $context.flow.process_read_property_ack(is_orig, invoke_id, service_ack_tags);
+        GET_ALARM_SUMMARY               -> $context.flow.process_get_alarm_summary_ack(is_orig, invoke_id, service_request_tags);
+        GET_ENROLLMENT_SUMMARY          -> $context.flow.process_get_enrollment_summary_ack(is_orig, invoke_id, service_request_tags);
+        ATOMIC_READ_FILE                -> $context.flow.process_atomic_read_file_ack(is_orig, invoke_id, service_request_tags);
+        ATOMIC_WRITE_FILE               -> $context.flow.process_atomic_write_file_ack(is_orig, invoke_id, service_request_tags);
+        CREATE_OBJECT                   -> $context.flow.process_create_object_ack(is_orig, invoke_id, service_request_tags);
+        READ_PROPERTY                   -> $context.flow.process_read_property_ack(is_orig, invoke_id, service_request_tags);
         READ_PROPERTY_CONDITIONAL       -> false; # Removed in Version 1 Revision 12
-        READ_PROPERTY_MULTIPLE          -> $context.flow.process_read_property_multiple_ack(is_orig, invoke_id, service_ack_tags);
-        CONFIRMED_PRIVATE_TRANSFER      -> $context.flow.process_confirmed_private_transfer_ack(is_orig, invoke_id, service_ack_tags);
-        VT_OPEN                         -> $context.flow.process_vt_open_ack(is_orig, invoke_id, service_ack_tags);
-        VT_DATA                         -> $context.flow.process_vt_data_ack(is_orig, invoke_id, service_ack_tags);
+        READ_PROPERTY_MULTIPLE          -> $context.flow.process_read_property_multiple_ack(is_orig, invoke_id, service_request_tags);
+        CONFIRMED_PRIVATE_TRANSFER      -> $context.flow.process_confirmed_private_transfer_ack(is_orig, invoke_id, service_request_tags);
+        VT_OPEN                         -> $context.flow.process_vt_open_ack(is_orig, invoke_id, service_request_tags);
+        VT_DATA                         -> $context.flow.process_vt_data_ack(is_orig, invoke_id, service_request_tags);
         AUTHENTICATE                    -> false; # Removed in Version 1 Revision 11
         REQUEST_KEY                     -> false; # Removed in Version 1 Revision 11
-        READ_RANGE                      -> $context.flow.process_read_range_ack(is_orig, invoke_id, service_ack_tags);
-        GET_EVENT_INFORMATION           -> $context.flow.process_get_event_information_ack(is_orig, invoke_id, service_ack_tags);
+        READ_RANGE                      -> $context.flow.process_read_range_ack(is_orig, invoke_id, service_request_tags);
+        GET_EVENT_INFORMATION           -> $context.flow.process_get_event_information_ack(is_orig, invoke_id, service_request_tags);
         default                         -> false;
     } &if (more_follows == 0);
     pdu_type: uint8 = choice_tag >> 4;

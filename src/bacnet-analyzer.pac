@@ -231,7 +231,13 @@
             return str;
 
         for ( int32 i = 1; i < data.length(); ++i )
+        {
+            // Stop at first embedded NUL to avoid creating Zeek strings that contain it.
+            if ( data[i] == 0 )
+                break;
+
             str += data[i];
+        }
 
         return str;
     }
@@ -243,6 +249,9 @@
 
         for ( int32 i = 0; i < data.length(); ++i )
         {
+            if ( data[i] == 0 )
+                break;
+
             str += data[i];
         }
 
@@ -1838,7 +1847,7 @@ refine flow BACNET_Flow += {
     ##      - Service Parameters:   list    -> Optional
     ##          + Conveys additional parameters for services specified from Vendor Id and Service Number
     ##  Confirmed-Private-Transfer Event Generation:
-    ##      - vendor_id             -> Vendor ID code
+    ##      - vendor_id             -> Vendor ID
     ##      - service_number        -> Service Number
     ## ------------------------------------------------------------------------------------------------
     function process_confirmed_private_transfer(is_orig: bool, invoke_id: uint8, tags: BACnet_Tag[]): bool
@@ -2715,4 +2724,27 @@ refine flow BACNET_Flow += {
     ###################################################################################################
     ####################################### END OF COMPLEX ACKS #######################################
     ###################################################################################################
+
+    function empty_tag_list(): BACnet_Tag[]
+        %{
+            return new vector<BACnet_Tag*>;
+        %}
+
+    # Returns a BACnet_Tag array. If more_follows == 0 (final segment), the buffer is
+    # completed and parsed. Otherwise, we just buffer the data and return an empty list so
+    # that the generated C++ always has a valid vector pointer (avoiding destructor asserts).
+    function compute_service_tags(data: const_bytestring, more_follows: bool): BACnet_Tag[]
+        %{
+            if ( more_follows == 0 )
+            {
+                // Final segment – append terminator in buffer_service_tags and parse.
+                return process_service_tags(buffer_service_tags(data, 0));
+            }
+            else
+            {
+                // Intermediate segment – buffer the bytes and return an empty tag list.
+                buffer_service_tags(data, more_follows);
+                return empty_tag_list();
+            }
+        %}
 };
