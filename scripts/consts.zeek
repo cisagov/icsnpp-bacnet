@@ -268,6 +268,10 @@ export {
         [7] = "who_has",
         [8] = "who_is",
         [9] = "utc_time_synchronization",
+        [10] = "write_group",
+        [11] = "unconfirmed_cov_notification_multiple",
+        [13] = "who_am_i",
+        [14] = "you_are",
     } &default = function(n: count): string {return fmt("Unknown Service Choice-0x%02x", n); };
 
     ###############################################################################################
@@ -304,6 +308,8 @@ export {
         [27] = "life_safety_operation",
         [28] = "subscribe_cov_property",
         [29] = "get_event_information",
+        [30] = "subscribe_cov_property_multiple",
+        [31] = "confirmed_cov_notification_multiple",
     }&default = function(n: count): string {return fmt("Unknown Service Choice-0x%02x", n); };
 
     ###############################################################################################
