@@ -122,17 +122,40 @@
             case 5: // Double (ANSI/IEEE-754 double precision floating point)
                 return to_string(get_double(data));
             case 6: // Octet String
-                for ( int32 i = 0; i < data.length(); ++i )
-                    str += zeek::util::fmt("%x",data[i]);
-                return str;
+                {
+                    // If the payload is extremely large, avoid allocating a gigantic string.
+                    if ( data.length() > 1024 )
+                        return zeek::util::fmt("<octets len=%d>", data.length());
+
+                    // Reserve exact space (2 hex chars per byte) to avoid repeated reallocs.
+                    str.reserve(data.length() * 2);
+
+                    static const char hexmap[] = "0123456789abcdef";
+                    for ( int32 i = 0; i < data.length(); ++i )
+                    {
+                        uint8 b = data[i];
+                        str.push_back(hexmap[b >> 4]);
+                        str.push_back(hexmap[b & 0x0F]);
+                    }
+                    return str;
+                }
             case 7: // Character String
                 return get_string(data);
             case 8: // Bit String
-                for( int8 j = 1; j < data.length(); ++j){
-                    for( int8 i = 7; i >= 0; --i)
-                        str += ((data[j]>>i)&1)==1 ? "T" : "F";
+                {
+                    if ( data.length() > 512 )
+                        return zeek::util::fmt("<bits len=%d>", data.length());
+
+                    if ( data.length() <= 1 )
+                        return str; // empty bitstring
+
+                    str.reserve((data.length()-1)*8);
+                    for( int32 j = 1; j < data.length(); ++j){
+                        for( int8 i = 7; i >= 0; --i)
+                            str += ((data[j]>>i)&1)==1 ? 'T' : 'F';
+                    }
+                    return str;
                 }
-                return str;
             case 9: // Enumerated
                 return to_string(get_unsigned(data));
             case 10: // BACnetDate
@@ -146,8 +169,13 @@
             case 12: // BACnetObjectIdentifier
                 if(data.length() == 4)
                 {
-                    str += object_types[(data[0] << 2) + (data[1] >> 6)];
-                    str += zeek::util::fmt(": %d",((data[1] & 0x3f) << 16) + (data[2] << 8) + data[3]);
+                    uint32 idx = (data[0] << 2) + (data[1] >> 6);
+                    if ( idx < (sizeof(object_types) / sizeof(object_types[0])) )
+                        str += object_types[idx];
+                    else
+                        str += zeek::util::fmt("unknown_type_%u", idx);
+
+                    str += zeek::util::fmt(": %u", ((data[1] & 0x3f) << 16) + (data[2] << 8) + data[3]);
                 }
                 return str;
             default:
@@ -221,28 +249,46 @@
         return *((double*)double_result);
     }
 
-    // Converts BACnet Tag data to string
+    // Converts BACnet Tag data (character string with UTF-8 indicator) to Zeek string
     string get_string(const_bytestring data)
     {
         string str = "";
 
-        // Ensure character set is UTF-8
-        if( data[0] != 0 )
+        if ( data.length() == 0 )
             return str;
 
+        if ( data[0] != 0 )
+            return str; // not UTF-8, ignore to match baseline
+
+        int32 start = 1;
+
+        if ( data.length() - 1 > 4096 )
+            return zeek::util::fmt("<string len=%d>", data.length() - 1);
+
         for ( int32 i = 1; i < data.length(); ++i )
+        {
+            if ( data[i] == 0 )
+                break;          // stop at embedded NUL
+
             str += data[i];
+        }
 
         return str;
     }
-    
-    // Converts BACnet Tag data to string
+
+    // Raw string helper that keeps original bytes (up to limit) and stops at NUL
     string get_string2(const_bytestring data)
     {
         string str = "";
 
+        if ( data.length() > 4096 )
+            return zeek::util::fmt("<string len=%d>", data.length());
+
         for ( int32 i = 0; i < data.length(); ++i )
         {
+            if ( data[i] == 0 )
+                break;
+
             str += data[i];
         }
 
