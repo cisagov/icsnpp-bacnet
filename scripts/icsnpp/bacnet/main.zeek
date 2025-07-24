@@ -198,6 +198,7 @@ event bacnet_apdu_header(c: connection,
     switch(pdu_type){
         case 5:
             bacnet_log$result_code = error_codes[result_code];
+            bacnet_log$pdu_service = "error";
             fallthrough;
         case 0:
             fallthrough;
@@ -211,9 +212,11 @@ event bacnet_apdu_header(c: connection,
             break;
         case 6:
             bacnet_log$result_code = reject_reasons[result_code];
+            bacnet_log$pdu_service = "reject";
             break;
         case 7:
             bacnet_log$result_code = abort_reasons[result_code];
+            bacnet_log$pdu_service = "abort";
             break;
         default:
             break;

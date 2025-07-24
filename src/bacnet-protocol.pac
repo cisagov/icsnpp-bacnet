@@ -512,7 +512,7 @@ type Confirmed_Request_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: uint
         1       -> proposed_window_value:   uint8;
         default -> no_proposed_window:      empty;
     };
-    service_choice   : uint8 &enforce(service_choice <= 0x1d);
+    service_choice   : uint8 &enforce(service_choice <= CONFIRMED_SERVICE_CHOICE_MAX);
     service_tag_data : bytestring &restofdata;
 } &let {
     is_segmented: bool = ((choice_tag & 0x8) >> 3);
@@ -574,7 +574,7 @@ type Confirmed_Request_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: uint
 ##      Passes Unconfirmed Request Tags to corresponding analyzer in bacnet_analyzer.pac
 ## ------------------------------------------------------------------------------------------------
 type Unconfirmed_Request_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: uint8) = record {
-    service_choice              : uint8 &enforce(service_choice <= 0x0b);
+    service_choice              : uint8 &enforce(service_choice <= UNCONFIRMED_SERVICE_CHOICE_MAX);
     service_request_tags        : BACnet_Tag[] &until($input.length() == 0);
 } &let {
     deliver: bool = case service_choice of {
@@ -614,7 +614,7 @@ type Unconfirmed_Request_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: ui
 ## ------------------------------------------------------------------------------------------------
 type Simple_ACK_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: uint8) = record {
     invoke_id       : uint8;
-    service_choice  : uint8 &enforce(service_choice <= 0x1d);
+    service_choice  : uint8 &enforce(service_choice <= CONFIRMED_SERVICE_CHOICE_MAX);
 } &let {
     pdu_type: uint8 = choice_tag >> 4;
     overview: bool = $context.flow.process_bacnet_apdu_header(is_orig, bvlc_function, pdu_type, service_choice, invoke_id, 0);
@@ -664,7 +664,7 @@ type Complex_ACK_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: uint8)   =
         1       -> proposed_window_value:   uint8;
         default -> no_proposed_window:      empty;
     };
-    service_choice   : uint8 &enforce(service_choice <= 0x1d);
+    service_choice   : uint8 &enforce(service_choice <= CONFIRMED_SERVICE_CHOICE_MAX);
     service_tag_data : bytestring &restofdata;
 } &let {
     is_segmented: bool = ((choice_tag & 0x8) >> 3);
@@ -748,7 +748,7 @@ type Segment_ACK_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: uint8) = r
 ## ------------------------------------------------------------------------------------------------
 type Error_PDU(is_orig: bool, choice_tag: uint8, bvlc_function: uint8) = record {
     invoke_id       : uint8;
-    service_choice  : uint8 &enforce(service_choice <= 0x1d);
+    service_choice  : uint8 &enforce(service_choice <= CONFIRMED_SERVICE_CHOICE_MAX);
     error_class     : BACnet_Tag;
     error_code      : BACnet_Tag;
 } &let {
