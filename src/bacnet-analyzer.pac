@@ -101,6 +101,8 @@
 
     string parse_tag(uint8 tag_num, uint8 tag_class, const_bytestring data, uint32 tag_length, uint32 tag_length_a);
 
+    string get_hex_string(const_bytestring data);
+
     %}
 
 %code{
@@ -207,6 +209,29 @@
             ret_val = tmp;
         }
         return ret_val;
+    }
+
+    // Converts an octet string to its lowercase hex representation with no separators.
+    // Matches the Octet String rendering used by parse_tag so that MAC layer addresses read the
+    // same way everywhere in the logs.
+    string get_hex_string(const_bytestring data)
+    {
+        string str = "";
+
+        // NPDU MAC layer addresses are at most 255 bytes, but stay defensive anyway.
+        if ( data.length() > 1024 )
+            return zeek::util::fmt("<octets len=%d>", data.length());
+
+        str.reserve(data.length() * 2);
+
+        static const char hexmap[] = "0123456789abcdef";
+        for ( int32 i = 0; i < data.length(); ++i )
+        {
+            uint8 b = data[i];
+            str.push_back(hexmap[b >> 4]);
+            str.push_back(hexmap[b & 0x0F]);
+        }
+        return str;
     }
 
     // Converts BACnet Tag data to uint32
@@ -449,6 +474,87 @@ refine flow BACNET_Flow += {
                                                            is_orig,
                                                            bvlc_function,
                                                            npdu_message_type);
+            }
+            return true;
+        %}
+
+    ## ----------------------------------process_bacnet_npdu_source------------------------------------
+    ## NPDU Source Description:
+    ##      Generated when the NPCI source specifier (control bit 3) is set, which means the NPDU
+    ##      carries the network number and MAC layer address of the device that originated it. On
+    ##      routed traffic that device is not the datalink source of the frame; the last-hop router
+    ##      is. This event is what lets the script layer attribute the message to the real origin.
+    ##      It is generated before the encapsulated APDU is parsed, so it always precedes the APDU
+    ##      events produced from the same datagram.
+    ## NPDU Source Event Generation:
+    ##      - snet      -> Original Source Network Number
+    ##      - slen      -> Length of Original Source MAC layer address (0 means broadcast)
+    ##      - sadr      -> Original Source MAC layer address, lowercase hex, no separators
+    ## ------------------------------------------------------------------------------------------------
+    function process_bacnet_npdu_source(is_orig: bool, snet: uint16, slen: uint8, sadr: const_bytestring): bool
+        %{
+            if ( ::bacnet_npdu_source )
+            {
+                zeek::BifEvent::enqueue_bacnet_npdu_source(connection()->zeek_analyzer(),
+                                                           connection()->zeek_analyzer()->Conn(),
+                                                           is_orig,
+                                                           snet,
+                                                           slen,
+                                                           zeek::make_intrusive<zeek::StringVal>(get_hex_string(sadr)));
+            }
+            return true;
+        %}
+
+    ## -------------------------------process_bacnet_npdu_destination----------------------------------
+    ## NPDU Destination Description:
+    ##      Generated when the NPCI destination specifier (control bit 5) is set, which means the
+    ##      NPDU carries the network number and MAC layer address of the ultimate destination
+    ##      device. This is the request-direction counterpart of the source specifier: a routed
+    ##      request carries DNET/DADR, and the matching response carries SNET/SADR.
+    ##      It is generated before the encapsulated APDU is parsed, so it always precedes the APDU
+    ##      events produced from the same datagram.
+    ## NPDU Destination Event Generation:
+    ##      - dnet      -> Ultimate Destination Network Number
+    ##      - dlen      -> Length of Ultimate Destination MAC layer address (0 means broadcast)
+    ##      - dadr      -> Ultimate Destination MAC layer address, lowercase hex, no separators
+    ## ------------------------------------------------------------------------------------------------
+    function process_bacnet_npdu_destination(is_orig: bool, dnet: uint16, dlen: uint8, dadr: const_bytestring): bool
+        %{
+            if ( ::bacnet_npdu_destination )
+            {
+                zeek::BifEvent::enqueue_bacnet_npdu_destination(connection()->zeek_analyzer(),
+                                                                connection()->zeek_analyzer()->Conn(),
+                                                                is_orig,
+                                                                dnet,
+                                                                dlen,
+                                                                zeek::make_intrusive<zeek::StringVal>(get_hex_string(dadr)));
+            }
+            return true;
+        %}
+
+    ## ---------------------------------process_bacnet_forwarded_npdu----------------------------------
+    ## Forwarded-NPDU Description:
+    ##      Generated for the B/IP Address of Originating Device carried by a BVLC Forwarded-NPDU
+    ##      (BVLC function 0x04). ASHRAE 135 Annex J requires a receiving node to treat that field
+    ##      as the source B/IP address of the sending node, so without it every message a BBMD
+    ##      forwards is attributed to the BBMD instead of to the device that sent it.
+    ##      It is generated before the encapsulated NPDU and APDU are parsed, so it always precedes
+    ##      the events produced from the rest of the same datagram.
+    ## Forwarded-NPDU Event Generation:
+    ##      - orig_ip   -> B/IP Address of Originating Device
+    ##      - orig_port -> B/IP Port of Originating Device
+    ## ------------------------------------------------------------------------------------------------
+    function process_bacnet_forwarded_npdu(is_orig: bool, orig_ip: uint32, orig_port: uint16): bool
+        %{
+            if ( ::bacnet_forwarded_npdu )
+            {
+                // orig_ip is parsed bigendian, so it is already in host order here. The AddrVal
+                // uint32 constructor wants network order, hence the htonl.
+                zeek::BifEvent::enqueue_bacnet_forwarded_npdu(connection()->zeek_analyzer(),
+                                                              connection()->zeek_analyzer()->Conn(),
+                                                              is_orig,
+                                                              zeek::make_intrusive<zeek::AddrVal>(htonl(orig_ip)),
+                                                              orig_port);
             }
             return true;
         %}
