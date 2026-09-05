@@ -43,7 +43,7 @@ If users are not using site/local.zeek or another site installation of Zeek and 
 
 ```bash
 git clone https://github.com/cisagov/icsnpp-bacnet.git
-zeek -Cr icsnpp-bacnet/tests/traces/bacnet_example.pcap icsnpp/bacnet
+zeek -Cr icsnpp-bacnet/testing/traces/bacnet_example.pcap icsnpp/bacnet
 ```
 
 ### Manual Install
@@ -76,7 +76,7 @@ To run this plugin in a site deployment users will need to add the line `@load i
 If users are not using site/local.zeek or another site installation of Zeek and want to run this package on a packet capture, they can add `icsnpp/bacnet` to the command to run this plugin's scripts on the packet capture:
 
 ```bash
-zeek -Cr icsnpp-bacnet/tests/traces/bacnet_example.pcap icsnpp/bacnet
+zeek -Cr icsnpp-bacnet/testing/traces/bacnet_example.pcap icsnpp/bacnet
 ```
 
 If users want to deploy this on an already existing Zeek implementation and don't want to build the plugin on the machine, they can extract the ICSNPP_Bacnet.tgz file to the directory of the established ZEEK_PLUGIN_PATH (default is `${ZEEK_INSTALLATION_DIR}/lib/zeek/plugins/`).
@@ -110,6 +110,14 @@ This log captures BACnet header information for every BACnet/IP packet and logs 
 | pdu_service   | string    | APDU service choice                                           |
 | invoke_id     | count     | Unique ID for all outstanding confirmed request/ACK APDUs     |
 | result_code   | string    | Error code or reject/abort reason                             |
+| snet          | count     | NPDU source network number (see *Routing and Forwarding Fields*)      |
+| slen          | count     | NPDU source MAC address length (see *Routing and Forwarding Fields*)  |
+| sadr          | string    | NPDU source MAC address (see *Routing and Forwarding Fields*)         |
+| dnet          | count     | NPDU destination network number (see *Routing and Forwarding Fields*) |
+| dlen          | count     | NPDU destination MAC address length (see *Routing and Forwarding Fields*) |
+| dadr          | string    | NPDU destination MAC address (see *Routing and Forwarding Fields*)    |
+| fwd_ip        | address   | Forwarded-NPDU originating device B/IP address (see *Routing and Forwarding Fields*) |
+| fwd_port      | port      | Forwarded-NPDU originating device B/IP port (see *Routing and Forwarding Fields*)    |
 
 #### Fields Captured (BACnet-NPDU Packets)
 
@@ -128,6 +136,14 @@ This log captures BACnet header information for every BACnet/IP packet and logs 
 | pdu_service   | string    | NPDU message type                                             |
 | invoke_id     | count     | NPDU destination network address                              |
 | result_code   | string    | N/A                                                           |
+| snet          | count     | NPDU source network number (see *Routing and Forwarding Fields*)      |
+| slen          | count     | NPDU source MAC address length (see *Routing and Forwarding Fields*)  |
+| sadr          | string    | NPDU source MAC address (see *Routing and Forwarding Fields*)         |
+| dnet          | count     | NPDU destination network number (see *Routing and Forwarding Fields*) |
+| dlen          | count     | NPDU destination MAC address length (see *Routing and Forwarding Fields*) |
+| dadr          | string    | NPDU destination MAC address (see *Routing and Forwarding Fields*)    |
+| fwd_ip        | address   | Forwarded-NPDU originating device B/IP address (see *Routing and Forwarding Fields*) |
+| fwd_port      | port      | Forwarded-NPDU originating device B/IP port (see *Routing and Forwarding Fields*)    |
 
 ### Discovery Log (bacnet_discovery.log)
 
@@ -155,6 +171,14 @@ This log captures important fields for Who-Is, I-Am, Who-Has, and I-Have message
 | vendor            | string    | BACnet device's vendor name                                     |
 | range             | string    | Range of instance numbers                                       |
 | object_name       | string    | Object name searching for (who-has) or responding with (i-have) |
+| snet              | count     | NPDU source network number (see *Routing and Forwarding Fields*)      |
+| slen              | count     | NPDU source MAC address length (see *Routing and Forwarding Fields*)  |
+| sadr              | string    | NPDU source MAC address (see *Routing and Forwarding Fields*)         |
+| dnet              | count     | NPDU destination network number (see *Routing and Forwarding Fields*) |
+| dlen              | count     | NPDU destination MAC address length (see *Routing and Forwarding Fields*) |
+| dadr              | string    | NPDU destination MAC address (see *Routing and Forwarding Fields*)    |
+| fwd_ip            | address   | Forwarded-NPDU originating device B/IP address (see *Routing and Forwarding Fields*) |
+| fwd_port          | port      | Forwarded-NPDU originating device B/IP port (see *Routing and Forwarding Fields*)    |
 
 ### Property Log (bacnet_property.log)
 
@@ -181,6 +205,15 @@ This log captures important variables for Read-Property-Request, Read-Property-A
 | property          | string    | Property type                                                 |
 | array_index       | count     | Property array index                                          |
 | value             | string    | Value of property                                             |
+| snet              | count     | NPDU source network number (see *Routing and Forwarding Fields*)      |
+| slen              | count     | NPDU source MAC address length (see *Routing and Forwarding Fields*)  |
+| sadr              | string    | NPDU source MAC address (see *Routing and Forwarding Fields*)         |
+| dnet              | count     | NPDU destination network number (see *Routing and Forwarding Fields*) |
+| dlen              | count     | NPDU destination MAC address length (see *Routing and Forwarding Fields*) |
+| dadr              | string    | NPDU destination MAC address (see *Routing and Forwarding Fields*)    |
+| fwd_ip            | address   | Forwarded-NPDU originating device B/IP address (see *Routing and Forwarding Fields*) |
+| fwd_port          | port      | Forwarded-NPDU originating device B/IP port (see *Routing and Forwarding Fields*)    |
+| priority          | count     | Write-Property priority, 1 (highest) to 16 (lowest). Unset when the request omitted it. |
 
 ### Device Control Log (bacnet_device_control.log)
 
@@ -207,6 +240,14 @@ This log captures important variables for Reinitialize-Device and Device-Communi
 | password          | string    | Password                                                                   |
 | result            | string    | Success, Error, Reject, or Abort                                           |
 | result_code       | string    | Resulting Error/Reject/Abort Code                                          |
+| snet              | count     | NPDU source network number (see *Routing and Forwarding Fields*)           |
+| slen              | count     | NPDU source MAC address length (see *Routing and Forwarding Fields*)       |
+| sadr              | string    | NPDU source MAC address (see *Routing and Forwarding Fields*)              |
+| dnet              | count     | NPDU destination network number (see *Routing and Forwarding Fields*)      |
+| dlen              | count     | NPDU destination MAC address length (see *Routing and Forwarding Fields*)  |
+| dadr              | string    | NPDU destination MAC address (see *Routing and Forwarding Fields*)         |
+| fwd_ip            | address   | Forwarded-NPDU originating device B/IP address (see *Routing and Forwarding Fields*) |
+| fwd_port          | port      | Forwarded-NPDU originating device B/IP port (see *Routing and Forwarding Fields*)    |
 
 ### Source and Destination Fields
 
@@ -251,6 +292,48 @@ The table below shows an example of these fields in the log files. The first log
 | ------------ | --------- |---------------|-----------|---------|---------------|----------|---------------|-------------- |
 | 192.168.1.10 | 47785     | 192.168.1.200 | 502       | T       | 192.168.1.10  | 47785    | 192.168.1.200 | 502           |
 | 192.168.1.10 | 47785     | 192.168.1.200 | 502       | F       | 192.168.1.200 | 502      | 192.168.1.10  | 47785         |
+
+### Routing and Forwarding Fields
+
+#### Overview
+
+`source_h` and `destination_h` are the true source and destination *of the BACnet/IP frame*. On a flat BACnet/IP network that is also the device that originated the message, but BACnet is a routed protocol and on real building networks it frequently is not:
+
+* A **BACnet router** relays messages between a BACnet/IP network and another network, typically MS/TP. The frame's IP source is the router; the originating device is identified only by the NPDU source specifier (SNET/SLEN/SADR), and the ultimate target of a routed request only by the destination specifier (DNET/DLEN/DADR). Without these, every device behind a router collapses onto the router's single IP address.
+* A **BBMD** (BACnet Broadcast Management Device) redistributes broadcasts as BVLC Forwarded-NPDU messages. ASHRAE 135 Annex J requires a receiving node to treat the *B/IP Address of Originating Device* field as the source B/IP address of the sending node. Without it, every message a BBMD forwards is attributed to the BBMD.
+
+Eight fields are added to each log file to carry this information. All are optional and are only populated when the packet actually carried them, so captures with no routed or forwarded traffic are unaffected:
+
+* `snet`, `slen`, `sadr` - originating network number and MAC layer address, present when the NPCI source specifier (control bit 3) is set
+* `dnet`, `dlen`, `dadr` - ultimate destination network number and MAC layer address, present when the NPCI destination specifier (control bit 5) is set
+* `fwd_ip`, `fwd_port` - B/IP address and port of the originating device, present on BVLC Forwarded-NPDU messages
+
+A request travelling to a routed device carries DNET/DADR; the response coming back carries SNET/SADR. `slen`/`dlen` of 0 means a broadcast on that network, in which case there is no address and `sadr`/`dadr` are left unset.
+
+`sadr` and `dadr` are rendered as lowercase hexadecimal with no separators, matching how this parser renders every other BACnet octet string. A one byte MS/TP MAC address of 108 therefore appears as `6c`.
+
+#### Examples
+
+Every row below is copied from a baseline log under `testing/baseline/`. `bacnet.log` and `bacnet_property.log` do not carry the same columns and do not spell the service name the same way, so each table uses the columns and the spelling of the file it was taken from. Columns not needed for the example, including the timestamp and the `uid` and `id` columns, are omitted for width; the values shown are unaltered.
+
+**Routed traffic, `bacnet.log`.** From `testing/baseline/analyzer.services/bacnet.log`, generated from `testing/traces/bacnet_services.pcap`. A Write-Property is sent to an MS/TP device at MAC address 108 on network 3, which sits behind a BACnet router at 192.168.0.24, and the device acknowledges it. Both frames are exchanged with the router, so `source_h` and `destination_h` name the router in one direction or the other and never name the device the write actually reached. The request carries the destination specifier and the acknowledgement carries the source specifier:
+
+| source_h     | destination_h | pdu_type          | pdu_service    | invoke_id | snet | slen | sadr | dnet | dlen | dadr |
+| ------------ | ------------- | ----------------- | -------------- | --------- | ---- | ---- | ---- | ---- | ---- | ---- |
+| 192.168.0.50 | 192.168.0.24  | CONFIRMED_REQUEST | write_property | 2         | -    | -    | -    | 3    | 1    | 6c   |
+| 192.168.0.24 | 192.168.0.50  | SIMPLE_ACK        | write_property | 2         | 3    | 1    | 6c   | -    | -    | -    |
+
+**The same exchange, `bacnet_property.log`.** From `testing/baseline/analyzer.services/bacnet_property.log`, the same trace. Only the request appears here: the acknowledgement to a Write-Property is a SimpleACK, which carries no property data and therefore produces no `bacnet_property.log` record at all, so the `snet`/`sadr` of the return direction is visible only in `bacnet.log` above. This log spells the service `write-property` and is the only one of the four with a `priority` column:
+
+| source_h     | destination_h | invoke_id | pdu_service    | snet | slen | sadr | dnet | dlen | dadr | priority |
+| ------------ | ------------- | --------- | -------------- | ---- | ---- | ---- | ---- | ---- | ---- | -------- |
+| 192.168.0.50 | 192.168.0.24  | 2         | write-property | -    | -    | -    | 3    | 1    | 6c   | 10       |
+
+**A Forwarded-NPDU, `bacnet.log`.** From `testing/baseline/analyzer.forwarded-npdu/bacnet.log`, generated from `testing/traces/bacnet_forwarded_npdu.pcap`. A BBMD at 192.168.1.5 redistributes an I-Am that originated at 192.168.1.77, so `source_h` is the BBMD and `fwd_ip` is the originating device. The NPDU additionally reports MAC 108 on network 3 as the source and the global broadcast network 65535 as the destination; `dlen` of 0 marks that destination as a broadcast, which is why `dadr` is unset:
+
+| source_h    | destination_h | pdu_type            | pdu_service | snet | slen | sadr | dnet  | dlen | dadr | fwd_ip       | fwd_port |
+| ----------- | ------------- | ------------------- | ----------- | ---- | ---- | ---- | ----- | ---- | ---- | ------------ | -------- |
+| 192.168.1.5 | 192.168.1.255 | UNCONFIRMED_REQUEST | i_am        | 3    | 1    | 6c   | 65535 | 0    | -    | 192.168.1.77 | 47808    |
 
 ## BACnet File Extraction
 

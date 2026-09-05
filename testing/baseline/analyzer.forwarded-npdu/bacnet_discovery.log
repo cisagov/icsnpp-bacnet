@@ -7,8 +7,6 @@
 #open XXXX-XX-XX-XX-XX-XX
 #fields	ts	uid	id.orig_h	id.orig_p	id.resp_h	id.resp_p	is_orig	source_h	source_p	destination_h	destination_p	pdu_service	device_id_type	device_id_number	object_type	instance_number	vendor	range	object_name	snet	slen	sadr	dnet	dlen	dadr	fwd_ip	fwd_port
 #types	time	string	addr	port	addr	port	bool	addr	port	addr	port	string	string	count	string	count	string	string	string	count	count	string	count	count	string	addr	port
-29.000000	CHhAvVGS1DHFjwGM9	10.10.10.10	47809	192.168.3.100	47808	T	10.10.10.10	47809	192.168.3.100	47808	i-am	-	-	device	101	Unknown Vendor-0x539	-	-	-	-	-	-	-	-	-	-
-3XXXXXXXXXX.XXXXXX	CHhAvVGS1DHFjwGM9	10.10.10.10	47809	192.168.3.100	47808	T	10.10.10.10	47809	192.168.3.100	47808	i-have	device	61	device	61	-	-	SYNERGY	13	1	3d	-	-	-	-	-
-36.000000	CHhAvVGS1DHFjwGM9	10.10.10.10	47809	192.168.3.100	47808	T	10.10.10.10	47809	192.168.3.100	47808	who-has	-	-	-	-	-	All	SYNERGY	-	-	-	65535	0	-	-	-
-37.000000	CHhAvVGS1DHFjwGM9	10.10.10.10	47809	192.168.3.100	47808	T	10.10.10.10	47809	192.168.3.100	47808	who-is	-	-	-	-	-	All	-	-	-	-	65535	0	-	-	-
+XXXXXXXXXX.XXXXXX	CHhAvVGS1DHFjwGM9	192.168.1.5	47808	192.168.1.255	47808	T	192.168.1.5	47808	192.168.1.255	47808	i-am	-	-	device	108	Mitsubishi Electric Corporation Air Conditioning & Refrigeration Systems Works	-	-	3	1	6c	65535	0	-	192.168.1.77	47808
+XXXXXXXXXX.XXXXXX	ClEkJM2Vm5giqnMf4h	192.168.1.5	47808	192.168.1.20	47808	T	192.168.1.5	47808	192.168.1.20	47808	i-am	-	-	device	108	Mitsubishi Electric Corporation Air Conditioning & Refrigeration Systems Works	-	-	-	-	-	-	-	-	192.168.1.90	47808
 #close XXXX-XX-XX-XX-XX-XX

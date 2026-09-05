@@ -33,6 +33,14 @@ export {
         pdu_service             : string    &log;   ##< APDU service (see unconfirmed_service_choice and confirmed_service_choice)
         invoke_id               : count     &log;   ##< Invoke ID
         result_code             : string    &log;   ##< See (abort_reasons, reject_reasons, and error_codes)
+        snet                    : count     &log &optional;   ##< NPDU Source Network Number (routed traffic only)
+        slen                    : count     &log &optional;   ##< Length of NPDU Source MAC layer address, 0 means broadcast
+        sadr                    : string    &log &optional;   ##< NPDU Source MAC layer address, lowercase hex
+        dnet                    : count     &log &optional;   ##< NPDU Destination Network Number (routed traffic only)
+        dlen                    : count     &log &optional;   ##< Length of NPDU Destination MAC layer address, 0 means broadcast
+        dadr                    : string    &log &optional;   ##< NPDU Destination MAC layer address, lowercase hex
+        fwd_ip                  : addr      &log &optional;   ##< B/IP Address of Originating Device (BVLC Forwarded-NPDU only)
+        fwd_port                : port      &log &optional;   ##< B/IP Port of Originating Device (BVLC Forwarded-NPDU only)
     };
 
     global log_bacnet: event(rec: BACnet_Header);
@@ -57,6 +65,14 @@ export {
         vendor                  : string    &log;   ##< Vendor Name (i-am and i-have requests)
         range                   : string    &log;   ##< Specify range of devices to return (in who-is and who-has requests)
         object_name             : string    &log;   ##< Object name searching for (who-has) or responding with (i-have)
+        snet                    : count     &log &optional;   ##< NPDU Source Network Number (routed traffic only)
+        slen                    : count     &log &optional;   ##< Length of NPDU Source MAC layer address, 0 means broadcast
+        sadr                    : string    &log &optional;   ##< NPDU Source MAC layer address, lowercase hex
+        dnet                    : count     &log &optional;   ##< NPDU Destination Network Number (routed traffic only)
+        dlen                    : count     &log &optional;   ##< Length of NPDU Destination MAC layer address, 0 means broadcast
+        dadr                    : string    &log &optional;   ##< NPDU Destination MAC layer address, lowercase hex
+        fwd_ip                  : addr      &log &optional;   ##< B/IP Address of Originating Device (BVLC Forwarded-NPDU only)
+        fwd_port                : port      &log &optional;   ##< B/IP Port of Originating Device (BVLC Forwarded-NPDU only)
     };
     global log_bacnet_discovery: event(rec: BACnet_Discovery);
 
@@ -79,6 +95,15 @@ export {
         property                : string    &log;   ##< Property type (see property_identifiers)
         array_index             : count     &log;   ##< Array index of property
         value                   : string    &log;   ##< Value of property
+        snet                    : count     &log &optional;   ##< NPDU Source Network Number (routed traffic only)
+        slen                    : count     &log &optional;   ##< Length of NPDU Source MAC layer address, 0 means broadcast
+        sadr                    : string    &log &optional;   ##< NPDU Source MAC layer address, lowercase hex
+        dnet                    : count     &log &optional;   ##< NPDU Destination Network Number (routed traffic only)
+        dlen                    : count     &log &optional;   ##< Length of NPDU Destination MAC layer address, 0 means broadcast
+        dadr                    : string    &log &optional;   ##< NPDU Destination MAC layer address, lowercase hex
+        fwd_ip                  : addr      &log &optional;   ##< B/IP Address of Originating Device (BVLC Forwarded-NPDU only)
+        fwd_port                : port      &log &optional;   ##< B/IP Port of Originating Device (BVLC Forwarded-NPDU only)
+        priority                : count     &log &optional;   ##< Write priority 1-16, unset when the request omitted it
     };
     global log_bacnet_property: event(rec: BACnet_Property);
 
@@ -101,8 +126,47 @@ export {
         password                : string    &log;   ##< password
         result                  : string    &log;   ##< Success, Error, Reject, or Abort
         result_code             : string    &log;   ##< resulting Error/Reject/Abort Code
+        snet                    : count     &log &optional;   ##< NPDU Source Network Number (routed traffic only)
+        slen                    : count     &log &optional;   ##< Length of NPDU Source MAC layer address, 0 means broadcast
+        sadr                    : string    &log &optional;   ##< NPDU Source MAC layer address, lowercase hex
+        dnet                    : count     &log &optional;   ##< NPDU Destination Network Number (routed traffic only)
+        dlen                    : count     &log &optional;   ##< Length of NPDU Destination MAC layer address, 0 means broadcast
+        dadr                    : string    &log &optional;   ##< NPDU Destination MAC layer address, lowercase hex
+        fwd_ip                  : addr      &log &optional;   ##< B/IP Address of Originating Device (BVLC Forwarded-NPDU only)
+        fwd_port                : port      &log &optional;   ##< B/IP Port of Originating Device (BVLC Forwarded-NPDU only)
     };
     global log_bacnet_device_control: event(rec: BACnet_Device_Control);
+
+    ###############################################################################################
+    ###########  Routing information recovered from the NPDU and BVLC layers (not logged)  #########
+    ###############################################################################################
+    ## Scratch state holding the routing addresses seen on the packet currently being processed.
+    ## The BACnet analyzer emits bacnet_npdu_source, bacnet_npdu_destination and
+    ## bacnet_forwarded_npdu while parsing the layers that sit above the datalink and below the
+    ## APDU, so those events always arrive before the APDU events generated from the same
+    ## datagram. The handlers below stash what they see here, and every log record written for
+    ## that same packet picks the values back up.
+    ##
+    ## pdu_seq is what scopes the stash to a single packet. It is the analyzer's own count of
+    ## BACnet PDUs on this connection, delivered by bacnet_bvlc_header, which is generated once
+    ## per datagram before any of that datagram's contents are parsed. That same event also
+    ## empties the stash, so a packet cannot read one that belongs to an earlier packet even by
+    ## accident. A capture timestamp cannot do either job: two packets on one connection, in one
+    ## direction, can legitimately share one, and the packet that followed a routed one would then
+    ## read the routed packet's addresses back out. is_orig is kept alongside pdu_seq as a
+    ## direction cross-check.
+    type BACnet_Routing: record {
+        pdu_seq                 : count;            ##< sequence number of the PDU this came from
+        is_orig                 : bool;             ##< direction of the packet this came from
+        snet                    : count     &optional;
+        slen                    : count     &optional;
+        sadr                    : string    &optional;
+        dnet                    : count     &optional;
+        dlen                    : count     &optional;
+        dadr                    : string    &optional;
+        fwd_ip                  : addr      &optional;
+        fwd_port                : port      &optional;
+    };
 
     ## Log policies, for log filtering.
     global log_policy: Log::PolicyHook;
@@ -111,6 +175,13 @@ export {
     global log_policy_device_control: Log::PolicyHook;
 
 }
+
+## Carries the per-packet routing scratch state described above, and the sequence number of the
+## BACnet PDU currently being processed on this connection.
+redef record connection += {
+    bacnet_routing: BACnet_Routing &optional;
+    bacnet_pdu_seq: count &optional;
+};
 
 ## Defines BACnet Ports
 const ports = { 47808/udp };
@@ -149,6 +220,219 @@ event zeek_init() &priority=5{
 function set_service(c: connection) {
   if ((!c?$service) || (|c$service| == 0))
     add c$service["bacnet"];
+}
+
+###################################################################################################
+#####  Routing scratch state helpers - see the BACnet_Routing comment in the export block     #####
+###################################################################################################
+
+## Sequence number of the BACnet PDU being processed on this connection, or 0 when the analyzer
+## has not reported one. It reports one for every BACnet/IP datagram, from the outermost header,
+## so in practice the fallback is only reached if bacnet_bvlc_header is never generated at all.
+function current_pdu_seq(c: connection): count
+{
+    return c?$bacnet_pdu_seq ? c$bacnet_pdu_seq : 0;
+}
+
+## Returns the routing scratch state for the packet being processed, creating or resetting it if
+## the state on hand belongs to a different packet or a different direction. Resetting rather than
+## adding to it matters as much as the guard in has_routing does: a packet carrying only a
+## destination specifier must not pick up the source specifier of the packet before it.
+function routing_state(c: connection, is_orig: bool): BACnet_Routing
+{
+    local pdu_seq = current_pdu_seq(c);
+
+    if ( ! c?$bacnet_routing ||
+         c$bacnet_routing$pdu_seq != pdu_seq ||
+         c$bacnet_routing$is_orig != is_orig )
+        c$bacnet_routing = [$pdu_seq=pdu_seq, $is_orig=is_orig];
+
+    return c$bacnet_routing;
+}
+
+## True when routing state was recorded for the packet being processed, in this direction. Without
+## a sequence number there is no way to tell one packet from another, so the answer is no and the
+## routing columns are left unset rather than filled in from whatever was seen last.
+function has_routing(c: connection, is_orig: bool): bool
+{
+    return c?$bacnet_pdu_seq &&
+           c?$bacnet_routing &&
+           c$bacnet_routing$pdu_seq == c$bacnet_pdu_seq &&
+           c$bacnet_routing$is_orig == is_orig;
+}
+
+## The four functions below copy that state onto a log record just before it is written. Zeek has
+## no record polymorphism, so there is one per log record type. Every assignment is conditional:
+## a field the packet did not carry stays unset and logs as the unset placeholder, which is what
+## keeps a capture with no routed or forwarded traffic reading exactly as it did before.
+function apply_routing_header(c: connection, rec: BACnet_Header)
+{
+    if ( ! has_routing(c, rec$is_orig) )
+        return;
+
+    local routing = c$bacnet_routing;
+
+    if ( routing?$snet )
+        rec$snet = routing$snet;
+    if ( routing?$slen )
+        rec$slen = routing$slen;
+    if ( routing?$sadr )
+        rec$sadr = routing$sadr;
+    if ( routing?$dnet )
+        rec$dnet = routing$dnet;
+    if ( routing?$dlen )
+        rec$dlen = routing$dlen;
+    if ( routing?$dadr )
+        rec$dadr = routing$dadr;
+    if ( routing?$fwd_ip )
+        rec$fwd_ip = routing$fwd_ip;
+    if ( routing?$fwd_port )
+        rec$fwd_port = routing$fwd_port;
+}
+
+function apply_routing_discovery(c: connection, rec: BACnet_Discovery)
+{
+    if ( ! has_routing(c, rec$is_orig) )
+        return;
+
+    local routing = c$bacnet_routing;
+
+    if ( routing?$snet )
+        rec$snet = routing$snet;
+    if ( routing?$slen )
+        rec$slen = routing$slen;
+    if ( routing?$sadr )
+        rec$sadr = routing$sadr;
+    if ( routing?$dnet )
+        rec$dnet = routing$dnet;
+    if ( routing?$dlen )
+        rec$dlen = routing$dlen;
+    if ( routing?$dadr )
+        rec$dadr = routing$dadr;
+    if ( routing?$fwd_ip )
+        rec$fwd_ip = routing$fwd_ip;
+    if ( routing?$fwd_port )
+        rec$fwd_port = routing$fwd_port;
+}
+
+function apply_routing_property(c: connection, rec: BACnet_Property)
+{
+    if ( ! has_routing(c, rec$is_orig) )
+        return;
+
+    local routing = c$bacnet_routing;
+
+    if ( routing?$snet )
+        rec$snet = routing$snet;
+    if ( routing?$slen )
+        rec$slen = routing$slen;
+    if ( routing?$sadr )
+        rec$sadr = routing$sadr;
+    if ( routing?$dnet )
+        rec$dnet = routing$dnet;
+    if ( routing?$dlen )
+        rec$dlen = routing$dlen;
+    if ( routing?$dadr )
+        rec$dadr = routing$dadr;
+    if ( routing?$fwd_ip )
+        rec$fwd_ip = routing$fwd_ip;
+    if ( routing?$fwd_port )
+        rec$fwd_port = routing$fwd_port;
+}
+
+function apply_routing_device_control(c: connection, rec: BACnet_Device_Control)
+{
+    if ( ! has_routing(c, rec$is_orig) )
+        return;
+
+    local routing = c$bacnet_routing;
+
+    if ( routing?$snet )
+        rec$snet = routing$snet;
+    if ( routing?$slen )
+        rec$slen = routing$slen;
+    if ( routing?$sadr )
+        rec$sadr = routing$sadr;
+    if ( routing?$dnet )
+        rec$dnet = routing$dnet;
+    if ( routing?$dlen )
+        rec$dlen = routing$dlen;
+    if ( routing?$dadr )
+        rec$dadr = routing$dadr;
+    if ( routing?$fwd_ip )
+        rec$fwd_ip = routing$fwd_ip;
+    if ( routing?$fwd_port )
+        rec$fwd_port = routing$fwd_port;
+}
+
+###################################################################################################
+#####  Records bacnet_bvlc_header event -> identity of the packet the routing state belongs to  ####
+###################################################################################################
+event bacnet_bvlc_header(c: connection,
+                         is_orig: bool,
+                         bvlc_function: count,
+                         length: count,
+                         pdu_seq: count){
+
+    # Two guards, either of which is sufficient on its own. Recording the sequence number is what
+    # scopes the stash to this packet, and discarding whatever the packet before left behind means
+    # there is nothing for this packet to read back even if the sequence numbers were ever to
+    # repeat. The analyzer generates this event from the outermost header of the datagram, ahead
+    # of everything the datagram contains, so both happen before anything can stash or read.
+    c$bacnet_pdu_seq = pdu_seq;
+    delete c$bacnet_routing;
+}
+
+###################################################################################################
+#######  Records bacnet_npdu_source event -> snet/slen/sadr columns on this packet's logs  ########
+###################################################################################################
+event bacnet_npdu_source(c: connection,
+                         is_orig: bool,
+                         snet: count,
+                         slen: count,
+                         sadr: string){
+
+    local routing = routing_state(c, is_orig);
+
+    routing$snet = snet;
+    routing$slen = slen;
+
+    # SLEN of 0 means broadcast on the source network, in which case SADR is zero bytes long.
+    if ( slen > 0 && sadr != "" )
+        routing$sadr = sadr;
+}
+
+###################################################################################################
+####  Records bacnet_npdu_destination event -> dnet/dlen/dadr columns on this packet's logs  ######
+###################################################################################################
+event bacnet_npdu_destination(c: connection,
+                              is_orig: bool,
+                              dnet: count,
+                              dlen: count,
+                              dadr: string){
+
+    local routing = routing_state(c, is_orig);
+
+    routing$dnet = dnet;
+    routing$dlen = dlen;
+
+    # DLEN of 0 means broadcast on the destination network, in which case DADR is zero bytes long.
+    if ( dlen > 0 && dadr != "" )
+        routing$dadr = dadr;
+}
+
+###################################################################################################
+###  Records bacnet_forwarded_npdu event -> fwd_ip/fwd_port columns on this packet's logs  ########
+###################################################################################################
+event bacnet_forwarded_npdu(c: connection,
+                            is_orig: bool,
+                            orig_ip: addr,
+                            orig_port: count){
+
+    local routing = routing_state(c, is_orig);
+
+    routing$fwd_ip = orig_ip;
+    routing$fwd_port = count_to_port(orig_port, udp);
 }
 
 ###################################################################################################
@@ -222,6 +506,8 @@ event bacnet_apdu_header(c: connection,
             break;
     }
 
+    apply_routing_header(c, bacnet_log);
+
     Log::write(LOG_BACNET, bacnet_log);
 }
 
@@ -258,6 +544,8 @@ event bacnet_npdu_header(c: connection,
 
     bacnet_log$pdu_type = "NPDU";
     bacnet_log$pdu_service = npdu_message_types[npdu_message_type];
+
+    apply_routing_header(c, bacnet_log);
 
     Log::write(LOG_BACNET, bacnet_log);
 }
@@ -297,6 +585,8 @@ event bacnet_who_is(c: connection,
         bacnet_discovery$range = "All";
     else
         bacnet_discovery$range = fmt("%d-%d", low_limit, high_limit);
+
+    apply_routing_discovery(c, bacnet_discovery);
 
     Log::write(LOG_BACNET_DISCOVERY, bacnet_discovery);
 }
@@ -339,6 +629,8 @@ event bacnet_i_am(c: connection,
     if(instance_number != UINT32_MAX)
         bacnet_discovery$instance_number = instance_number;
     bacnet_discovery$vendor = vendors[vendor_id];
+
+    apply_routing_discovery(c, bacnet_discovery);
 
     Log::write(LOG_BACNET_DISCOVERY, bacnet_discovery);
 }
@@ -392,6 +684,8 @@ event bacnet_who_has(c: connection,
     else
         bacnet_discovery$range = fmt("%d-%d", low_limit, high_limit);
 
+    apply_routing_discovery(c, bacnet_discovery);
+
     Log::write(LOG_BACNET_DISCOVERY, bacnet_discovery);
 }
 
@@ -443,6 +737,8 @@ event bacnet_i_have(c: connection,
 
     bacnet_discovery$object_name = object_name;
 
+    apply_routing_discovery(c, bacnet_discovery);
+
     Log::write(LOG_BACNET_DISCOVERY, bacnet_discovery);
 }
 
@@ -488,6 +784,8 @@ event bacnet_read_property(c: connection,
 
     if( property_array_index != UINT32_MAX )
         bacnet_property$array_index = property_array_index;
+
+    apply_routing_property(c, bacnet_property);
 
     Log::write(LOG_BACNET_PROPERTY, bacnet_property);
 }
@@ -572,6 +870,8 @@ event bacnet_read_property_ack(c: connection,
         bacnet_property$value = property_value;
     }
 
+    apply_routing_property(c, bacnet_property);
+
     Log::write(LOG_BACNET_PROPERTY, bacnet_property);
 }
 
@@ -620,6 +920,11 @@ event bacnet_write_property(c: connection,
     if( property_array_index != UINT32_MAX )
         bacnet_property$array_index = property_array_index;
 
+    # Priority is optional in the Write-Property request. The analyzer signals its absence with
+    # UINT8_MAX, which is not a legal BACnet priority, so it is left unset rather than logged.
+    if( priority != UINT8_MAX )
+        bacnet_property$priority = priority;
+
     if (property_value != "" && is_num(property_value)) {
         switch(property_identifier){
             case 36:
@@ -654,6 +959,8 @@ event bacnet_write_property(c: connection,
     } else if (property_value != "") {
         bacnet_property$value = property_value;
     }
+
+    apply_routing_property(c, bacnet_property);
 
     Log::write(LOG_BACNET_PROPERTY, bacnet_property);
 }
@@ -694,6 +1001,8 @@ event bacnet_property_error(c: connection,
 
     bacnet_property$pdu_service = "ERROR: " + confirmed_service_choice[pdu_service];
     bacnet_property$object_type = error_codes[result_code];
+
+    apply_routing_property(c, bacnet_property);
 
     Log::write(LOG_BACNET_PROPERTY, bacnet_property);
 }
@@ -737,6 +1046,8 @@ event bacnet_read_range(c: connection,
 
     if( property_array_index != UINT32_MAX )
         bacnet_property$array_index = property_array_index;
+
+    apply_routing_property(c, bacnet_property);
 
     Log::write(LOG_BACNET_PROPERTY, bacnet_property);
 }
@@ -785,6 +1096,8 @@ event bacnet_read_range_ack(c: connection,
 
     bacnet_property$value = fmt("item_count: %d",item_count);
 
+    apply_routing_property(c, bacnet_property);
+
     Log::write(LOG_BACNET_PROPERTY, bacnet_property);
 }
 
@@ -825,6 +1138,8 @@ event bacnet_reinitialize_device(c: connection,
     bacnet_device_control$device_state = reinitialize_device_states[reinitialized_state];
     bacnet_device_control$password = password;
     
+    apply_routing_device_control(c, bacnet_device_control);
+
     Log::write(LOG_BACNET_DEVICE_CONTROL, bacnet_device_control);
 }
 
@@ -882,6 +1197,8 @@ event bacnet_device_control_response(c: connection,
             break;
     }
 
+    apply_routing_device_control(c, bacnet_device_control);
+
     Log::write(LOG_BACNET_DEVICE_CONTROL, bacnet_device_control);
 }
 
@@ -922,6 +1239,8 @@ event bacnet_device_communication_control(c: connection,
         bacnet_device_control$time_duration = time_duration;
     bacnet_device_control$device_state = device_communication_control_states[enable_disable];
     bacnet_device_control$password = password;
+
+    apply_routing_device_control(c, bacnet_device_control);
 
     Log::write(LOG_BACNET_DEVICE_CONTROL, bacnet_device_control);
 }
