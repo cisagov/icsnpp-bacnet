@@ -145,10 +145,18 @@ export {
     ## bacnet_forwarded_npdu while parsing the layers that sit above the datalink and below the
     ## APDU, so those events always arrive before the APDU events generated from the same
     ## datagram. The handlers below stash what they see here, and every log record written for
-    ## that same packet picks the values back up. ts and is_orig scope the stash to one packet in
-    ## one direction so that nothing leaks into the next packet on the same connection.
+    ## that same packet picks the values back up.
+    ##
+    ## pdu_seq is what scopes the stash to a single packet. It is the analyzer's own count of
+    ## BACnet PDUs on this connection, delivered by bacnet_bvlc_header, which is generated once
+    ## per datagram before any of that datagram's contents are parsed. That same event also
+    ## empties the stash, so a packet cannot read one that belongs to an earlier packet even by
+    ## accident. A capture timestamp cannot do either job: two packets on one connection, in one
+    ## direction, can legitimately share one, and the packet that followed a routed one would then
+    ## read the routed packet's addresses back out. is_orig is kept alongside pdu_seq as a
+    ## direction cross-check.
     type BACnet_Routing: record {
-        ts                      : time;             ##< network_time() of the packet this came from
+        pdu_seq                 : count;            ##< sequence number of the PDU this came from
         is_orig                 : bool;             ##< direction of the packet this came from
         snet                    : count     &optional;
         slen                    : count     &optional;
@@ -168,9 +176,11 @@ export {
 
 }
 
-## Carries the per-packet routing scratch state described above.
+## Carries the per-packet routing scratch state described above, and the sequence number of the
+## BACnet PDU currently being processed on this connection.
 redef record connection += {
     bacnet_routing: BACnet_Routing &optional;
+    bacnet_pdu_seq: count &optional;
 };
 
 ## Defines BACnet Ports
@@ -216,23 +226,38 @@ function set_service(c: connection) {
 #####  Routing scratch state helpers - see the BACnet_Routing comment in the export block     #####
 ###################################################################################################
 
+## Sequence number of the BACnet PDU being processed on this connection, or 0 when the analyzer
+## has not reported one. It reports one for every BACnet/IP datagram, from the outermost header,
+## so in practice the fallback is only reached if bacnet_bvlc_header is never generated at all.
+function current_pdu_seq(c: connection): count
+{
+    return c?$bacnet_pdu_seq ? c$bacnet_pdu_seq : 0;
+}
+
 ## Returns the routing scratch state for the packet being processed, creating or resetting it if
-## the state on hand belongs to a different packet or a different direction.
+## the state on hand belongs to a different packet or a different direction. Resetting rather than
+## adding to it matters as much as the guard in has_routing does: a packet carrying only a
+## destination specifier must not pick up the source specifier of the packet before it.
 function routing_state(c: connection, is_orig: bool): BACnet_Routing
 {
+    local pdu_seq = current_pdu_seq(c);
+
     if ( ! c?$bacnet_routing ||
-         c$bacnet_routing$ts != network_time() ||
+         c$bacnet_routing$pdu_seq != pdu_seq ||
          c$bacnet_routing$is_orig != is_orig )
-        c$bacnet_routing = [$ts=network_time(), $is_orig=is_orig];
+        c$bacnet_routing = [$pdu_seq=pdu_seq, $is_orig=is_orig];
 
     return c$bacnet_routing;
 }
 
-## True when routing state was recorded for the packet being processed, in this direction.
+## True when routing state was recorded for the packet being processed, in this direction. Without
+## a sequence number there is no way to tell one packet from another, so the answer is no and the
+## routing columns are left unset rather than filled in from whatever was seen last.
 function has_routing(c: connection, is_orig: bool): bool
 {
-    return c?$bacnet_routing &&
-           c$bacnet_routing$ts == network_time() &&
+    return c?$bacnet_pdu_seq &&
+           c?$bacnet_routing &&
+           c$bacnet_routing$pdu_seq == c$bacnet_pdu_seq &&
            c$bacnet_routing$is_orig == is_orig;
 }
 
@@ -338,6 +363,24 @@ function apply_routing_device_control(c: connection, rec: BACnet_Device_Control)
         rec$fwd_ip = routing$fwd_ip;
     if ( routing?$fwd_port )
         rec$fwd_port = routing$fwd_port;
+}
+
+###################################################################################################
+#####  Records bacnet_bvlc_header event -> identity of the packet the routing state belongs to  ####
+###################################################################################################
+event bacnet_bvlc_header(c: connection,
+                         is_orig: bool,
+                         bvlc_function: count,
+                         length: count,
+                         pdu_seq: count){
+
+    # Two guards, either of which is sufficient on its own. Recording the sequence number is what
+    # scopes the stash to this packet, and discarding whatever the packet before left behind means
+    # there is nothing for this packet to read back even if the sequence numbers were ever to
+    # repeat. The analyzer generates this event from the outermost header of the datagram, ahead
+    # of everything the datagram contains, so both happen before anything can stash or read.
+    c$bacnet_pdu_seq = pdu_seq;
+    delete c$bacnet_routing;
 }
 
 ###################################################################################################

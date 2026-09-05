@@ -35,12 +35,14 @@ type BACNET_PDU(is_orig: bool) = record {
 ##      - BVLC Function:    1 byte      -> Identifies specific function (see consts.pac)
 ##      - BVLC Length:      2 bytes     -> Length of entire BACnet/IP message in bytes
 ## Protocol Parsing:
-##      Passes BVLC Function to corresponding function type for further processing
+##      Generates bacnet_bvlc_header, then passes BVLC Function to corresponding function type for
+##      further processing
 ## ------------------------------------------------------------------------------------------------
 type BVLC_Header(is_orig: bool) = record {
     bvlc_type         : uint8 &enforce(bvlc_type == 0x81);
     bvlc_function     : uint8; # No need for &enforce because switch statement below passes processing according to bvlc_function
     length            : uint16;
+    pdu_start         : BVLC_PDU_Start(is_orig, bvlc_function, length);
     body             : case bvlc_function of {
         BVLC_RESULT                         -> bvlc_result:                         BVLC_Result(is_orig);
         WRITE_BROADCAST_TABLE               -> write_broadcast:                     Write_Broadcast_Distribution_Table(is_orig);
@@ -60,6 +62,27 @@ type BVLC_Header(is_orig: bool) = record {
 } &let {
     originator: bool = is_orig;
 }
+
+## -----------------------------------------BVLC-PDU-Start-----------------------------------------
+## Message Description:
+##      Marks the point at which the BVLC header has been read and the BVLL message body is about
+##      to be parsed. Consumes no bytes. It exists so that bacnet_bvlc_header is generated exactly
+##      once per BACnet/IP datagram and ahead of everything the datagram contains: a record's &let
+##      block runs after that record's fields are parsed, so a &let on BVLC_Header itself would run
+##      after the body, not before it, and a field is the only way to place work between the two.
+##      Generating the event here is what gives the script layer a per-packet identity to scope
+##      per-packet state with. Placing it after the BVLC header rather than before also means the
+##      event reports the header's own contents.
+## Message Format:
+##      - Empty, no bytes on the wire
+## Protocol Parsing:
+##      Assigns this datagram its sequence number within the connection and generates
+##      bacnet_bvlc_header
+## ------------------------------------------------------------------------------------------------
+type BVLC_PDU_Start(is_orig: bool, bvlc_function: uint8, length: uint16) = record {
+} &let {
+    deliver: bool = $context.flow.process_bacnet_bvlc_header(is_orig, bvlc_function, length);
+};
 
 ## ------------------------------------------BVLC-Result-------------------------------------------
 ## Message Description:

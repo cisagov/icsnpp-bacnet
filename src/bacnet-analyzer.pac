@@ -323,6 +323,27 @@
     %}
 
 
+refine connection BACNET_Conn += {
+
+    %member{
+        //
+        // Number of BACnet PDUs seen on this connection so far, counting both directions. It is
+        // incremented once per BVLC header, before any of that PDU's contents are parsed, so
+        // every event generated from one datagram carries the same value and consecutive
+        // datagrams never carry the same one. That is the per-packet identity the script layer
+        // needs in order to scope per-packet state; a capture timestamp cannot supply it,
+        // because two packets can legitimately share one.
+        //
+        uint64 pdu_seq_ = 0;
+    %}
+
+    function next_pdu_seq(): uint64
+        %{
+            return ++pdu_seq_;
+        %}
+};
+
+
 refine flow BACNET_Flow += {
 
     %member{
@@ -398,6 +419,39 @@ refine flow BACNET_Flow += {
     ###################################################################################################
     ##################################### GENERAL BACNET MESSAGE ######################################
     ###################################################################################################
+
+    ## -----------------------------------process_bacnet_bvlc_header-----------------------------------
+    ## BVLC Header Description:
+    ##      Generated once for every BACnet/IP datagram, from the BVLC header that frames it and
+    ##      before any of the encapsulated NPDU or APDU is parsed, so it precedes every other event
+    ##      generated from the same datagram.
+    ##      The sequence number it carries is what lets the script layer tell one packet from the
+    ##      next while holding state that belongs to a single packet. network_time() cannot do that
+    ##      job, because two packets on one connection, in one direction, can legitimately carry the
+    ##      same capture timestamp.
+    ## BVLC Header Event Generation:
+    ##      - bvlc_function -> BVLC Function
+    ##          + Matches bvlc_functions in consts.zeek
+    ##      - length        -> Length of the BVLL message in bytes, as declared by the BVLC header
+    ##      - pdu_seq       -> Sequence number of this PDU within the connection
+    ## ------------------------------------------------------------------------------------------------
+    function process_bacnet_bvlc_header(is_orig: bool, bvlc_function: uint8, length: uint16): bool
+        %{
+            // Counted whether or not anything is listening, so that the numbering of the PDUs a
+            // connection carries does not depend on which handlers happen to be loaded.
+            uint64 pdu_seq = connection()->next_pdu_seq();
+
+            if ( ::bacnet_bvlc_header )
+            {
+                zeek::BifEvent::enqueue_bacnet_bvlc_header(connection()->zeek_analyzer(),
+                                                           connection()->zeek_analyzer()->Conn(),
+                                                           is_orig,
+                                                           bvlc_function,
+                                                           length,
+                                                           pdu_seq);
+            }
+            return true;
+        %}
 
     ## -----------------------------------process_bacnet_apdu_header-----------------------------------
     ## General BACnet APDU Message Description:
