@@ -35,10 +35,10 @@ void BACNET_Analyzer::DeliverPacket(int len, const u_char* data, bool orig, uint
     {
         #if ZEEK_VERSION_NUMBER < 40200
         ProtocolViolation(zeek::util::fmt("Binpac exception: %s", e.c_msg()));
-
-        #else
+        #elif ZEEK_VERSION_NUMBER < 80200
         AnalyzerViolation(zeek::util::fmt("Binpac exception: %s", e.c_msg()));
-
+        #else
+        AnalyzerViolation(zeek::util::fmt("Binpac exception: %s", e.what()));
         #endif
     }
 }
