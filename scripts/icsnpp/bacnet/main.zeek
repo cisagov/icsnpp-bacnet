@@ -113,13 +113,18 @@ export {
 }
 
 ## Defines BACnet Ports
-const ports = { 47808/udp };
-redef likely_server_ports += { ports };
+export {
+    const bacnet_ports = { 47808/udp } &redef;
+}
+
+redef likely_server_ports += { bacnet_ports };
 
 ###################################################################################################
 #######  Defines Log Streams for bacnet.log, bacnet_discovery.log, and bacnet_property.log  #######
 ###################################################################################################
 event zeek_init() &priority=5{
+    Analyzer::register_for_ports(Analyzer::ANALYZER_BACNET, bacnet_ports);
+
     Log::create_stream(Bacnet::LOG_BACNET, [$columns=BACnet_Header,
                                             $ev=log_bacnet,
                                             $path="bacnet",
@@ -139,8 +144,6 @@ event zeek_init() &priority=5{
                                                      $ev=log_bacnet_device_control,
                                                      $path="bacnet_device_control",
                                                      $policy=log_policy_device_control]);
-
-    Analyzer::register_for_ports(Analyzer::ANALYZER_BACNET, ports);
 }
 
 ###################################################################################################

@@ -274,6 +274,12 @@ Modified configuration, only parses BACnet traffic on UDP/47808:
 @load ./files
 ```
 
+If so desired, after modifying the configuration to comment out the Zeek DPD signature, the default BACnet traffic port can be overridden by redefining the `bacnet_ports` variable, e.g.:
+
+```bash
+zeek -Cr ./testing/traces/bacnet_example_port_change.pcap icsnpp/bacnet "Bacnet::bacnet_ports={ 5678/udp }" 
+```
+
 ## Coverage
 
 See [Logging Capabilities](#logging-capabilities) for detailed information of the parser coverage.
