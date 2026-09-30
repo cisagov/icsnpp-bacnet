@@ -3,6 +3,7 @@
 # @TEST-EXEC: btest-diff bacnet.log
 # @TEST-EXEC: btest-diff bacnet_property.log
 #
-# @TEST-DOC: Test BACnet analyzer with small trace and port change.
+# @TEST-DOC: Test BACnet analyzer port registration with DPD disabled and a non-standard UDP port.
 
-@load icsnpp/bacnet
+@load icsnpp/bacnet/main
+@load icsnpp/bacnet/files

@@ -258,27 +258,33 @@ BACnet contains two messages for sending and receiving files: Atomic-Read-File a
 
 ## Troubleshooting
 
-By default, this BACnet parser uses a Zeek DPD signature to detect BACnet traffic. If users are seeing false positives in their BACnet logs and their BACnet traffic is operating on UDP port 47808, users can disable this DPD signature by removing or commenting-out the first line of [scripts/icsnpp/bacnet/\_\_load\_\_.zeek](scripts/icsnpp/bacnet/__load__.zeek).
+This BACnet/IP parser supports UDP traffic only. By default, it uses both port-based analyzer registration for UDP/47808 and a Zeek DPD signature. The DPD signature can detect matching BACnet payloads in either UDP direction when both endpoint ports are 1024 or greater. If users are seeing false positives in their BACnet logs and their BACnet traffic is operating on UDP port 47808, users can disable this DPD signature by removing or commenting out the first line of [scripts/icsnpp/bacnet/\_\_load\_\_.zeek](scripts/icsnpp/bacnet/__load__.zeek).
 
-Default configuration, parses BACnet traffic on all UDP ports, but may produce false positives
+Default configuration, using both the UDP/47808 registration and payload signature detection, which may produce false positives:
 ```bash
 @load-sigs ./dpd.sig
 @load ./main
 @load ./files
 ```
 
-Modified configuration, only parses BACnet traffic on UDP/47808:
+Modified configuration, using only port-based detection on UDP/47808:
 ```bash
 # @load-sigs ./dpd.sig
 @load ./main
 @load ./files
 ```
 
-If so desired, after modifying the configuration to comment out the Zeek DPD signature, the default BACnet traffic port can be overridden by redefining the `bacnet_ports` variable, e.g.:
+To assign a non-standard UDP port directly to the BACnet analyzer, redefine `Bacnet::bacnet_ports`. The same set is also added to Zeek's `likely_server_ports` direction heuristic, but adding a port only to `likely_server_ports` does not enable BACnet parsing. There is no corresponding TCP port set because this parser does not support BACnet over TCP.
+
+For example, after disabling the DPD signature as shown above, this command parses BACnet on UDP/5678 through port-based registration:
 
 ```bash
-zeek -Cr ./testing/traces/bacnet_example_port_change.pcap icsnpp/bacnet "Bacnet::bacnet_ports={ 5678/udp }" 
+zeek -Cr ./testing/traces/bacnet_example_port_change.pcap icsnpp/bacnet "Bacnet::bacnet_ports={ 5678/udp }"
 ```
+
+A command-line redefinition applies when that Zeek process starts and does not require rebuilding the plugin. For a persistent sensor or cluster configuration, place the redefinition in the deployed Zeek configuration and restart or redeploy Zeek so the scripts are reloaded.
+
+Port-based registration sends all UDP traffic with either endpoint on a configured port to the BACnet analyzer without first validating its payload. Assign only ports dedicated to BACnet; unrelated or malformed traffic on those ports can cause false positives, analyzer violations, and additional processing load.
 
 ## Coverage
 
