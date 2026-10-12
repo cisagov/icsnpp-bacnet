@@ -274,7 +274,7 @@ Modified configuration, using only port-based detection on UDP/47808:
 @load ./files
 ```
 
-To assign a non-standard UDP port directly to the BACnet analyzer, redefine `Bacnet::bacnet_ports`. The same set is also added to Zeek's `likely_server_ports` direction heuristic, but adding a port only to `likely_server_ports` does not enable BACnet parsing. There is no corresponding TCP port set because this parser does not support BACnet over TCP.
+To assign a non-standard BACnet/IP port directly to the analyzer, redefine `Bacnet::bacnet_ports` using `/udp` notation. The same set is also added to Zeek's `likely_server_ports` direction heuristic, but adding a port only to `likely_server_ports` does not enable BACnet parsing.
 
 For example, after disabling the DPD signature as shown above, this command parses BACnet on UDP/5678 through port-based registration:
 
