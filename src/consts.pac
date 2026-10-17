@@ -35,6 +35,19 @@ enum named_tags
 }
 
 ############################################################
+######################  Tag Classes  #######################
+############################################################
+## Bit 3 of a BACnet tag header selects the tag's class (ASHRAE 135 clause 20.2.1.1).
+## Application-class and context-class tag numbers are SEPARATE namespaces: application
+## tag 4 means Real, context tag 4 in a WriteProperty-Request means Priority. Code that
+## dispatches on a tag number must therefore also check the class.
+enum tag_classes
+{
+    APPLICATION_CLASS = 0,
+    CONTEXT_CLASS     = 1,
+}
+
+############################################################
 ##################  BVLC Function Codes  ###################
 ############################################################
 enum bvlc_function_codes

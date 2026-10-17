@@ -1806,6 +1806,19 @@ refine flow BACNET_Flow += {
                     
                     for ( uint32 i = 2; i < ${tags}->size(); ++i )
                     {
+                        // The parameters dispatched below (Property Array Index, the
+                        // opening/closing tag around Property Value, and Priority) are all
+                        // CONTEXT-class tags. Application-class tag numbers are a separate
+                        // namespace and collide with them: the property value itself sits
+                        // between the opening and closing context tag 3 and carries an
+                        // application tag whose number may be 2 (Unsigned) or 4 (Real).
+                        // Without this class check, writing an Unsigned value is read as a
+                        // Property Array Index, and writing a Real value is read as a
+                        // Priority (the first byte of the IEEE-754 encoding). See ASHRAE 135
+                        // clause 20.2.1.1.
+                        if ( ${tags[i].tag_class} != CONTEXT_CLASS )
+                            continue;
+
                         switch(${tags[i].tag_num})
                         {
                             case 2:
@@ -1820,6 +1833,7 @@ refine flow BACNET_Flow += {
                                 break;
                             case 4:
                                 priority = ${tags[i].tag_data[0]};
+                                break;
                             default:
                                 break;
                         }
