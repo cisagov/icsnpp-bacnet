@@ -787,6 +787,11 @@ refine flow BACNET_Flow += {
                         i += 1;
                     }
 
+                    if ( (size_t)(i + 1) >= ${tags}->size() || ${tags[i].tag_data}.length() == 0 )
+                    {
+                        return true;
+                    }
+
                     uint8 message_priority = ${tags[i].tag_data[0]};;
                     string message = get_string(${tags[i+1].tag_data});
 
@@ -1986,6 +1991,9 @@ refine flow BACNET_Flow += {
                     if( ${tags[i].tag_num} == 1 )
                         i += 1;
 
+                    if ( (size_t)(i + 1) >= ${tags}->size() || ${tags[i].tag_data}.length() == 0 )
+                        return true;
+                                            
                     uint8 message_priority = ${tags[i].tag_data[0]};;
                     string message = get_string(${tags[i+1].tag_data});
 
