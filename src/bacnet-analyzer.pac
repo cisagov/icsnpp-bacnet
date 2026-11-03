@@ -2278,7 +2278,7 @@ refine flow BACNET_Flow += {
 
                     if( ${tags}->size() > i && ${tags[i].tag_num} == 3)
                     {
-                        lifetime = get_unsigned(${tags[0].tag_data});
+                        lifetime = get_unsigned(${tags[i].tag_data});
                         i += 1;
                     }
 
