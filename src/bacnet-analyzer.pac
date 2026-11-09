@@ -2272,6 +2272,9 @@ refine flow BACNET_Flow += {
 
                     if( ${tags}->size() > i && ${tags[i].tag_num} == 2)
                     {
+                        if ( ${tags[i].tag_data}.length() == 0 )
+                            return true;
+
                         issue_confirmed = ${tags[i].tag_data[0]};
                         i += 1;
                     }
