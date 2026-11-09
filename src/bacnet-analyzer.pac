@@ -1869,22 +1869,22 @@ refine flow BACNET_Flow += {
                     uint8 priority = UINT8_MAX;
                     string property_value = "";
                     bool have_property = false;
-                    bool in_property_value = false;
+                    uint32 property_value_depth = 0;
 
                     for ( uint32 i = x; i < ${tags}->size(); ++i )
                     {
                         if ( ${tags[i].named_tag} == OPENING )
                         {
-                            if ( ${tags[i].tag_num} == 2 )
-                                in_property_value = true;
+                            if ( property_value_depth > 0 || ${tags[i].tag_num} == 2 )
+                                ++property_value_depth;
                             continue;
                         }
 
                         if ( ${tags[i].named_tag} == CLOSING )
                         {
-                            if ( ${tags[i].tag_num} == 2 )
+                            if ( property_value_depth > 0 )
                             {
-                                in_property_value = false;
+                                --property_value_depth;
                                 continue;
                             }
 
@@ -1909,7 +1909,7 @@ refine flow BACNET_Flow += {
                             continue;
                         }
 
-                        if ( in_property_value )
+                        if ( property_value_depth > 0 )
                         {
                             if ( property_value.empty() )
                             {
