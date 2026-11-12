@@ -787,6 +787,11 @@ refine flow BACNET_Flow += {
                         i += 1;
                     }
 
+                    if ( (size_t)(i + 1) >= ${tags}->size() || ${tags[i].tag_data}.length() == 0 )
+                    {
+                        return true;
+                    }
+
                     uint8 message_priority = ${tags[i].tag_data[0]};;
                     string message = get_string(${tags[i+1].tag_data});
 
@@ -1986,6 +1991,9 @@ refine flow BACNET_Flow += {
                     if( ${tags[i].tag_num} == 1 )
                         i += 1;
 
+                    if ( (size_t)(i + 1) >= ${tags}->size() || ${tags[i].tag_data}.length() == 0 )
+                        return true;
+                                            
                     uint8 message_priority = ${tags[i].tag_data[0]};;
                     string message = get_string(${tags[i+1].tag_data});
 
@@ -2257,28 +2265,38 @@ refine flow BACNET_Flow += {
                 if ( ${tags} -> size() >= 5)
                 {
                     uint8 issue_confirmed = UINT8_MAX, i = 2;
-                    uint32 lifetime = UINT32_MAX, cov_increment = UINT32_MAX;
+                    uint32 lifetime = UINT32_MAX, cov_increment = UINT32_MAX, monitored_property = UINT32_MAX;
 
                     uint32 subscriber_process_id = get_unsigned(${tags[0].tag_data});
                     BACnetObjectIdentifier monitored_object_identifer = {${tags[1].tag_data}};
 
-                    if(${tags[i].tag_num} == 2)
+                    if( ${tags}->size() > i && ${tags[i].tag_num} == 2)
                     {
+                        if ( ${tags[i].tag_data}.length() == 0 )
+                            return true;
+
                         issue_confirmed = ${tags[i].tag_data[0]};
                         i += 1;
                     }
 
-                    if(${tags[i].tag_num} == 3)
+                    if( ${tags}->size() > i && ${tags[i].tag_num} == 3)
                     {
-                        lifetime = get_unsigned(${tags[0].tag_data});
+                        lifetime = get_unsigned(${tags[i].tag_data});
                         i += 1;
                     }
 
                     i += 1;
-                    uint32 monitored_property = get_unsigned(${tags[i].tag_data});
+
+                    if( ${tags}->size() > i && ${tags[i].tag_num} == 0 )
+                    {
+                        monitored_property = get_unsigned(${tags[i].tag_data});
+                    } else 
+                    {
+                        return true;
+                    }
                     i += 2;
 
-                    if( ${tags}->size() > i)
+                    if( ${tags}->size() > i && ${tags[i].tag_num} == 5)
                     {
                         cov_increment = get_unsigned(${tags[i].tag_data});
                     }
