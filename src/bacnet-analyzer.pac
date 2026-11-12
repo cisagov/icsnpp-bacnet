@@ -1862,6 +1862,109 @@ refine flow BACNET_Flow += {
     ## ------------------------------------------------------------------------------------------------
     function process_write_property_multiple(is_orig: bool, invoke_id: uint8, tags: BACnet_Tag[]): bool
         %{
+            if ( ::bacnet_write_property )
+            {
+                for ( uint32 x = 0; x < ${tags}->size(); ++x )
+                {
+                    BACnetObjectIdentifier object_identifier = {${tags[x].tag_data}};
+                    x += 1;
+
+                    uint32 property_identifier = UINT32_MAX;
+                    uint32 property_array_index = UINT32_MAX;
+                    uint8 priority = UINT8_MAX;
+                    string property_value = "";
+                    bool have_property = false;
+                    uint32 property_value_depth = 0;
+
+                    for ( uint32 i = x; i < ${tags}->size(); ++i )
+                    {
+                        if ( ${tags[i].named_tag} == OPENING )
+                        {
+                            if ( property_value_depth > 0 || ${tags[i].tag_num} == 2 )
+                                ++property_value_depth;
+                            continue;
+                        }
+
+                        if ( ${tags[i].named_tag} == CLOSING )
+                        {
+                            if ( property_value_depth > 0 )
+                            {
+                                --property_value_depth;
+                                continue;
+                            }
+
+                            if ( ${tags[i].tag_num} == 1 )
+                            {
+                                if ( have_property )
+                                {
+                                    zeek::BifEvent::enqueue_bacnet_write_property(connection()->zeek_analyzer(),
+                                                                                  connection()->zeek_analyzer()->Conn(),
+                                                                                  is_orig,
+                                                                                  invoke_id,
+                                                                                  object_identifier.object_type,
+                                                                                  object_identifier.instance_number,
+                                                                                  property_identifier,
+                                                                                  property_array_index,
+                                                                                  priority,
+                                                                                  zeek::make_intrusive<zeek::StringVal>(property_value));
+                                }
+                                x = i;
+                                break;
+                            }
+                            continue;
+                        }
+
+                        if ( property_value_depth > 0 )
+                        {
+                            if ( property_value.empty() )
+                            {
+                                property_value = parse_tag(${tags[i].tag_num},
+                                                           ${tags[i].tag_class},
+                                                           ${tags[i].tag_data},
+                                                           ${tags[i].tag_length},
+                                                           ${tags[i].tag_length_a});
+                            }
+                            continue;
+                        }
+
+                        if ( ${tags[i].tag_class} != 1 )
+                            continue;
+
+                        switch ( ${tags[i].tag_num} )
+                        {
+                            case 0:
+                                if ( have_property )
+                                {
+                                    zeek::BifEvent::enqueue_bacnet_write_property(connection()->zeek_analyzer(),
+                                                                                  connection()->zeek_analyzer()->Conn(),
+                                                                                  is_orig,
+                                                                                  invoke_id,
+                                                                                  object_identifier.object_type,
+                                                                                  object_identifier.instance_number,
+                                                                                  property_identifier,
+                                                                                  property_array_index,
+                                                                                  priority,
+                                                                                  zeek::make_intrusive<zeek::StringVal>(property_value));
+                                }
+                                property_identifier = get_unsigned(${tags[i].tag_data});
+                                property_array_index = UINT32_MAX;
+                                priority = UINT8_MAX;
+                                property_value = "";
+                                have_property = true;
+                                break;
+                            case 1:
+                                property_array_index = get_unsigned(${tags[i].tag_data});
+                                break;
+                            case 3:
+                                priority = ${tags[i].tag_data[0]};
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }
+            }
+
             if ( ::bacnet_write_property_multiple )
             {
                 zeek::BifEvent::enqueue_bacnet_write_property_multiple(connection()->zeek_analyzer(),
