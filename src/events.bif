@@ -11,6 +11,34 @@
 #######################################  LOGGED BY DEFAULT  #######################################
 ###################################################################################################
 
+## ---------------------------------------bacnet-bvlc-header---------------------------------------
+## Event Description:
+##      Event is generated once for every BACnet/IP datagram, from the BVLC header that frames it,
+##      and before any of the encapsulated NPDU or APDU is parsed. It therefore precedes every
+##      other event generated from the same datagram.
+##      pdu_seq is the analyzer's own count of BACnet PDUs seen on the connection, counting both
+##      directions. The only guarantee it makes, and the only one anything should rely on, is that
+##      every event generated from one datagram reports the same value and that two different
+##      datagrams on the same connection never report the same value. A script that has to hold
+##      state for the duration of one packet should key that state on pdu_seq. network_time() will
+##      not do: it is the capture timestamp of the packet being processed, and two packets on one
+##      connection, in one direction, can legitimately carry the same timestamp.
+## Event Data:
+##      - c:                    connection  -> Zeek Connection Struct
+##      - is_orig:              bool        -> the message came from the originator/client or the responder/server
+##      - bvlc_function:        count       -> BVLC Function (see bvlc_functions in consts.pac)
+##      - length:               count       -> Length of the BVLL message in bytes, as declared by the BVLC header
+##      - pdu_seq:              count       -> Sequence number of this PDU within the connection
+## Default Output:
+##      None directly. Scopes the per-packet routing state that fills the snet/slen/sadr,
+##      dnet/dlen/dadr and fwd_ip/fwd_port columns of the other logs.
+## ------------------------------------------------------------------------------------------------
+event bacnet_bvlc_header%(c: connection,
+                          is_orig: bool,
+                          bvlc_function: count,
+                          length: count,
+                          pdu_seq: count%);
+
 ## ---------------------------------------bacnet-apdu-header---------------------------------------
 ## Event Description:
 ##      Event is generated for all BACnet APDU packets and contains relevant BACnet header data
@@ -49,6 +77,74 @@ event bacnet_npdu_header%(c: connection,
                           is_orig: bool,
                           bvlc_function: count,
                           npdu_message_type: count%);
+
+## ---------------------------------------bacnet-npdu-source---------------------------------------
+## Event Description:
+##      Event is generated for every BACnet NPDU whose NPCI source specifier (control bit 3) is
+##      set, which is how a routed NPDU carries the network number and MAC layer address of the
+##      device that actually originated it. On routed traffic the datalink source of the frame is
+##      the last-hop router, not that device, so this is the only place the true origin appears.
+##      Generated before the encapsulated APDU is parsed, so it precedes every APDU event that
+##      comes out of the same datagram.
+## Event Data:
+##      - c:                    connection  -> Zeek Connection Struct
+##      - is_orig:              bool        -> the message came from the originator/client or the responder/server
+##      - snet:                 count       -> Original Source Network Number
+##      - slen:                 count       -> Length of Original Source MAC layer address, 0 means broadcast
+##      - sadr:                 string      -> Original Source MAC layer address, lowercase hex, no separators
+## Default Output:
+##      Adds snet/slen/sadr to the log records written for the same packet
+## ------------------------------------------------------------------------------------------------
+event bacnet_npdu_source%(c: connection,
+                          is_orig: bool,
+                          snet: count,
+                          slen: count,
+                          sadr: string%);
+
+## ------------------------------------bacnet-npdu-destination-------------------------------------
+## Event Description:
+##      Event is generated for every BACnet NPDU whose NPCI destination specifier (control bit 5)
+##      is set, which is how a routed NPDU carries the network number and MAC layer address of the
+##      ultimate destination device. This is the request-direction counterpart of
+##      bacnet_npdu_source: a routed request carries DNET/DADR and the matching response carries
+##      SNET/SADR.
+##      Generated before the encapsulated APDU is parsed, so it precedes every APDU event that
+##      comes out of the same datagram.
+## Event Data:
+##      - c:                    connection  -> Zeek Connection Struct
+##      - is_orig:              bool        -> the message came from the originator/client or the responder/server
+##      - dnet:                 count       -> Ultimate Destination Network Number
+##      - dlen:                 count       -> Length of Ultimate Destination MAC layer address, 0 means broadcast
+##      - dadr:                 string      -> Ultimate Destination MAC layer address, lowercase hex, no separators
+## Default Output:
+##      Adds dnet/dlen/dadr to the log records written for the same packet
+## ------------------------------------------------------------------------------------------------
+event bacnet_npdu_destination%(c: connection,
+                               is_orig: bool,
+                               dnet: count,
+                               dlen: count,
+                               dadr: string%);
+
+## -------------------------------------bacnet-forwarded-npdu--------------------------------------
+## Event Description:
+##      Event is generated for every BVLC Forwarded-NPDU (BVLC function 0x04) and carries the
+##      B/IP Address of Originating Device. ASHRAE 135 Annex J requires a receiving node to use
+##      that field as the source B/IP address of the sending node, so without it everything a BBMD
+##      forwards is attributed to the BBMD rather than to the device that sent it.
+##      Generated before the encapsulated NPDU and APDU are parsed, so it precedes every event
+##      that comes out of the rest of the same datagram.
+## Event Data:
+##      - c:                    connection  -> Zeek Connection Struct
+##      - is_orig:              bool        -> the message came from the originator/client or the responder/server
+##      - orig_ip:              addr        -> B/IP Address of Originating Device
+##      - orig_port:            count       -> B/IP Port of Originating Device
+## Default Output:
+##      Adds fwd_ip/fwd_port to the log records written for the same packet
+## ------------------------------------------------------------------------------------------------
+event bacnet_forwarded_npdu%(c: connection,
+                             is_orig: bool,
+                             orig_ip: addr,
+                             orig_port: count%);
 
 ## ------------------------------------------bacnet-i-am-------------------------------------------
 ## Event Description:

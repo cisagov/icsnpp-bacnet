@@ -35,12 +35,14 @@ type BACNET_PDU(is_orig: bool) = record {
 ##      - BVLC Function:    1 byte      -> Identifies specific function (see consts.pac)
 ##      - BVLC Length:      2 bytes     -> Length of entire BACnet/IP message in bytes
 ## Protocol Parsing:
-##      Passes BVLC Function to corresponding function type for further processing
+##      Generates bacnet_bvlc_header, then passes BVLC Function to corresponding function type for
+##      further processing
 ## ------------------------------------------------------------------------------------------------
 type BVLC_Header(is_orig: bool) = record {
     bvlc_type         : uint8 &enforce(bvlc_type == 0x81);
     bvlc_function     : uint8; # No need for &enforce because switch statement below passes processing according to bvlc_function
     length            : uint16;
+    pdu_start         : BVLC_PDU_Start(is_orig, bvlc_function, length);
     body             : case bvlc_function of {
         BVLC_RESULT                         -> bvlc_result:                         BVLC_Result(is_orig);
         WRITE_BROADCAST_TABLE               -> write_broadcast:                     Write_Broadcast_Distribution_Table(is_orig);
@@ -60,6 +62,27 @@ type BVLC_Header(is_orig: bool) = record {
 } &let {
     originator: bool = is_orig;
 }
+
+## -----------------------------------------BVLC-PDU-Start-----------------------------------------
+## Message Description:
+##      Marks the point at which the BVLC header has been read and the BVLL message body is about
+##      to be parsed. Consumes no bytes. It exists so that bacnet_bvlc_header is generated exactly
+##      once per BACnet/IP datagram and ahead of everything the datagram contains: a record's &let
+##      block runs after that record's fields are parsed, so a &let on BVLC_Header itself would run
+##      after the body, not before it, and a field is the only way to place work between the two.
+##      Generating the event here is what gives the script layer a per-packet identity to scope
+##      per-packet state with. Placing it after the BVLC header rather than before also means the
+##      event reports the header's own contents.
+## Message Format:
+##      - Empty, no bytes on the wire
+## Protocol Parsing:
+##      Assigns this datagram its sequence number within the connection and generates
+##      bacnet_bvlc_header
+## ------------------------------------------------------------------------------------------------
+type BVLC_PDU_Start(is_orig: bool, bvlc_function: uint8, length: uint16) = record {
+} &let {
+    deliver: bool = $context.flow.process_bacnet_bvlc_header(is_orig, bvlc_function, length);
+};
 
 ## ------------------------------------------BVLC-Result-------------------------------------------
 ## Message Description:
@@ -136,12 +159,33 @@ type Read_Broadcast_Distribution_Table_ACK(is_orig: bool) = record {
 ##      - bacnet_port:  2 bytes     -> B/IP Port of Originating Device
 ## Protocol Parsing:
 ##      Passes BVLC Function (0x04 for Forwarded-NPDU) to NPDU layer for further processing
+##      Logs the B/IP Address/Port of Originating Device (see Forwarded_NPDU_Originator)
 ## ------------------------------------------------------------------------------------------------
 type Forwarded_NPDU(is_orig: bool) = record {
-    bacnet_ip       : uint32;
-    bacnet_port     : uint16;
+    originator      : Forwarded_NPDU_Originator(is_orig);
     npdu            : NPDU_Header(is_orig, 0x04);
 }
+
+## ------------------------------------Forwarded-NPDU-Originator-----------------------------------
+## Message Description:
+##      B/IP Address of Originating Device carried by a Forwarded-NPDU. This is the true source of
+##      the encapsulated NPDU; the datalink source of the frame is the forwarding BBMD.
+##      Held in its own record so that the &let below is evaluated before the encapsulated NPDU and
+##      APDU are parsed. That keeps bacnet_forwarded_npdu ahead of every event generated from the
+##      rest of the same datagram, which is what lets the script layer attach the originator to the
+##      log records those later events write.
+## Message Format:
+##      - bacnet_ip:    4 bytes     -> B/IP Address of Originating Device
+##      - bacnet_port:  2 bytes     -> B/IP Port of Originating Device
+## Protocol Parsing:
+##      Logs B/IP Address and Port of Originating Device to bacnet.log
+## ------------------------------------------------------------------------------------------------
+type Forwarded_NPDU_Originator(is_orig: bool) = record {
+    bacnet_ip       : uint32;
+    bacnet_port     : uint16;
+} &let {
+    deliver: bool = $context.flow.process_bacnet_forwarded_npdu(is_orig, bacnet_ip, bacnet_port);
+};
 
 ## ------------------------------------Register-Foreign-Device-------------------------------------
 ## Message Description:
@@ -345,11 +389,11 @@ type NPDU_Header(is_orig: bool, bvlc_function: uint8) = record {
         default -> no_npdu_message:     empty;
     };
     destination         : case ((npdu_control & 0x20) >> 5) of {
-        1       -> destination_exists:  NPDU_Destination;
+        1       -> destination_exists:  NPDU_Destination(is_orig);
         default -> no_destination:      empty;
     };
     source              : case ((npdu_control & 0x08) >> 3) of {
-        1       -> source_exists:       NPDU_Source;
+        1       -> source_exists:       NPDU_Source(is_orig);
         default -> no_source:           empty;
     };
     hop_count           : case ((npdu_control & 0x20) >> 5) of {
@@ -387,13 +431,15 @@ type NPDU_Message(is_orig: bool, bvlc_function: uint8) = record {
 ##        + Value of 0 indicates broadcast on the destination network
 ##      - DADR:     variable length     -> Ultimate Destination MAC layer address
 ## Protocol Parsing:
-##      Continue with NPDU processing
+##      Logs DNET, DLEN, and DADR to bacnet.log and continues with NPDU processing
 ## ------------------------------------------------------------------------------------------------
-type NPDU_Destination = record {
+type NPDU_Destination(is_orig: bool) = record {
     DNET        : uint16;
     DLEN        : uint8;
     DADR        : bytestring &length = DLEN;
-}
+} &let {
+    deliver: bool = $context.flow.process_bacnet_npdu_destination(is_orig, DNET, DLEN, DADR);
+};
 
 ## ------------------------------------------NPDU-Source-------------------------------------------
 ## Message Description:
@@ -403,13 +449,15 @@ type NPDU_Destination = record {
 ##      - SLEN:     1 byte      -> Length of Original Source MAC layer address
 ##      - SADR:     Variable    -> Original Source MAC layer address
 ## Protocol Parsing:
-##      Continue with NPDU processing
+##      Logs SNET, SLEN, and SADR to bacnet.log and continues with NPDU processing
 ## ------------------------------------------------------------------------------------------------
-type NPDU_Source = record {
+type NPDU_Source(is_orig: bool) = record {
     SNET        : uint16;
     SLEN        : uint8;
     SADR        : bytestring &length = SLEN;
-}
+} &let {
+    deliver: bool = $context.flow.process_bacnet_npdu_source(is_orig, SNET, SLEN, SADR);
+};
 
 
 ###################################################################################################
